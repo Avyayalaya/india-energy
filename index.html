@@ -2285,6 +2285,62 @@ let currentTime = 'apr';
 let selectedCascadeDay = 'today';
 let selectedEntity = null;
 window.crisisIntensity = 0.85; // default: today's crisis level
+
+// ---- ROUTE VOLUME MODIFIERS PER CRISIS DAY ----
+// Multipliers applied to each route's base volume_mtpa to show supply chain restructuring.
+// Values >1.0 = surge, <1.0 = disruption. Based on PPAC/IMF PortWatch data.
+const ROUTE_MODIFIERS = {
+  day0:  { hormuz_oil: 1.0,  hormuz_lng: 1.0,  russia_oil: 1.0,  indonesia_coal: 1.0,  australia: 1.0,  cape_routes: 1.0,  usa: 1.0,  other: 1.0 },
+  day1:  { hormuz_oil: 0.7,  hormuz_lng: 0.8,  russia_oil: 1.0,  indonesia_coal: 1.0,  australia: 1.0,  cape_routes: 1.1,  usa: 1.0,  other: 1.0 },
+  day7:  { hormuz_oil: 0.15, hormuz_lng: 0.2,  russia_oil: 1.3,  indonesia_coal: 1.1,  australia: 1.1,  cape_routes: 1.5,  usa: 1.2,  other: 1.0 },
+  day30: { hormuz_oil: 0.05, hormuz_lng: 0.1,  russia_oil: 2.25, indonesia_coal: 1.15, australia: 1.1,  cape_routes: 2.0,  usa: 1.5,  other: 1.0 },
+  day90: { hormuz_oil: 0.05, hormuz_lng: 0.08, russia_oil: 2.5,  indonesia_coal: 1.2,  australia: 1.15, cape_routes: 2.2,  usa: 1.8,  other: 1.0 },
+  today: { hormuz_oil: 0.05, hormuz_lng: 0.1,  russia_oil: 2.25, indonesia_coal: 1.15, australia: 1.1,  cape_routes: 2.0,  usa: 1.5,  other: 1.0 }
+};
+
+// Classify a route into a modifier group based on origin, commodity, and chokepoints.
+function getRouteModifierGroup(route) {
+  const chokes = route.chokepoints || [];
+  const hasHormuz = chokes.includes('hormuz');
+  const commodity = route.commodity;
+  const fromLat = route.from.lat;
+  const fromLng = route.from.lng;
+
+  // Hormuz routes: commodity-specific
+  if (hasHormuz && commodity === 'oil') return 'hormuz_oil';
+  if (hasHormuz && commodity === 'lng') return 'hormuz_lng';
+
+  // Cape routes (West Africa, or explicit cape/suez_or_cape chokepoint)
+  if (chokes.includes('cape') || chokes.includes('suez_or_cape')) {
+    // Further classify by origin
+    if (fromLng < 0) return 'usa';             // USA (negative longitude)
+    if (fromLat > 40) return 'russia_oil';      // Russia Baltic via Suez/Cape
+    return 'cape_routes';                        // West Africa, generic cape
+  }
+
+  // Russia Pacific routes (lat > 40, via Malacca)
+  if (fromLat > 40 && commodity === 'oil') return 'russia_oil';
+
+  // Indonesia coal (lat < 0, lng > 100)
+  if (fromLat < 0 && fromLng > 100 && commodity === 'coal') return 'indonesia_coal';
+
+  // Australia (lat < -20, lng > 100) — coal or LNG
+  // South Africa (lat < -20, lng < 50) falls through to 'other' — direct Indian Ocean
+  if (fromLat < -20 && fromLng > 100) return 'australia';
+
+  // USA (lng < 0)
+  if (fromLng < 0) return 'usa';
+
+  return 'other';
+}
+
+// Get the volume multiplier for a route on the current crisis day
+function getRouteVolumeMultiplier(route) {
+  const group = getRouteModifierGroup(route);
+  const dayMods = ROUTE_MODIFIERS[selectedCascadeDay] || ROUTE_MODIFIERS['today'];
+  return dayMods[group] || 1.0;
+}
+
 let mapInstance = null;
 let deckgl = null;
 let currentZoom = 3.5;
@@ -2456,8 +2512,15 @@ function initMap() {
 
 function getTooltipHTML(obj, layerId) {
   if (layerId === 'arc-oil' || layerId === 'arc-coal' || layerId === 'arc-lng') {
+    const mult = getRouteVolumeMultiplier(obj);
+    const adjVol = (obj.volume_mtpa * mult).toFixed(1);
+    const adjMbd = obj.volume_mbd ? (obj.volume_mbd * mult).toFixed(2) : null;
+    const isNormal = (Math.abs(mult - 1.0) < 0.01);
+    const volColor = mult < 0.5 ? 'color:#ef4444' : mult > 1.3 ? 'color:#22c55e' : '';
+    const pctLabel = isNormal ? '' : mult < 1.0 ? ` <span style="${volColor};font-size:10px">(${Math.round((1-mult)*100)}% disrupted)</span>` : ` <span style="${volColor};font-size:10px">(+${Math.round((mult-1)*100)}% surge)</span>`;
     return `<div class="tt-title">${obj.from.name} &#8594; ${obj.to.name}</div>
-      <div class="tt-row"><span class="tt-label">Volume</span><span class="tt-value">${obj.volume_mtpa} MMTPA${obj.volume_mbd ? ' ('+obj.volume_mbd+' mb/d)' : ''}</span></div>
+      <div class="tt-row"><span class="tt-label">Base volume</span><span class="tt-value">${obj.volume_mtpa} MMTPA${obj.volume_mbd ? ' ('+obj.volume_mbd+' mb/d)' : ''}</span></div>
+      ${!isNormal ? `<div class="tt-row"><span class="tt-label">Crisis vol.</span><span class="tt-value" style="${volColor}">${adjVol} MMTPA${adjMbd ? ' ('+adjMbd+' mb/d)' : ''}${pctLabel}</span></div>` : ''}
       <div class="tt-row"><span class="tt-label">Transit</span><span class="tt-value">${obj.transit_days} days</span></div>
       <div class="tt-row"><span class="tt-label">Chokepoints</span><span class="tt-value">${obj.chokepoints.length ? obj.chokepoints.join(', ') : 'None'}</span></div>`;
   }
@@ -2606,13 +2669,13 @@ function updateLayers() {
         const alpha = d.chokepoints.includes('hormuz') ? Math.floor(180 * hormuzDimFactor * pulse) : Math.floor(180 * pulse);
         return [255,179,71, Math.max(30, alpha)];
       },
-      getWidth: d => Math.max(1, Math.sqrt(d.volume_mtpa) * 0.8),
+      getWidth: d => Math.max(1, Math.sqrt(d.volume_mtpa * getRouteVolumeMultiplier(d)) * 0.8),
       getHeight: 0.3,
       greatCircle: true,
       pickable: true,
       autoHighlight: true,
       highlightColor: [255,255,255,60],
-      updateTriggers: { getSourceColor: [t], getTargetColor: [t] }
+      updateTriggers: { getSourceColor: [t], getTargetColor: [t], getWidth: [selectedCascadeDay] }
     }));
   }
   if (layerVisibility['routes-coal']) {
@@ -2630,13 +2693,13 @@ function updateLayers() {
         const pulse = 0.7 + 0.3 * Math.sin(t * 2 + index * 0.6 + 1.5);
         return [160,160,160, Math.floor(140 * pulse)];
       },
-      getWidth: d => Math.max(1, Math.sqrt(d.volume_mtpa) * 0.6),
+      getWidth: d => Math.max(1, Math.sqrt(d.volume_mtpa * getRouteVolumeMultiplier(d)) * 0.6),
       getHeight: 0.3,
       greatCircle: true,
       pickable: true,
       autoHighlight: true,
       highlightColor: [255,255,255,60],
-      updateTriggers: { getSourceColor: [t], getTargetColor: [t] }
+      updateTriggers: { getSourceColor: [t], getTargetColor: [t], getWidth: [selectedCascadeDay] }
     }));
   }
   if (layerVisibility['routes-lng']) {
@@ -2656,13 +2719,13 @@ function updateLayers() {
         const alpha = d.chokepoints.includes('hormuz') ? Math.floor(180 * hormuzDimFactor * pulse) : Math.floor(180 * pulse);
         return [79,195,247, Math.max(30, alpha)];
       },
-      getWidth: d => Math.max(1, Math.sqrt(d.volume_mtpa) * 1.2),
+      getWidth: d => Math.max(1, Math.sqrt(d.volume_mtpa * getRouteVolumeMultiplier(d)) * 1.2),
       getHeight: 0.3,
       greatCircle: true,
       pickable: true,
       autoHighlight: true,
       highlightColor: [255,255,255,60],
-      updateTriggers: { getSourceColor: [t], getTargetColor: [t] }
+      updateTriggers: { getSourceColor: [t], getTargetColor: [t], getWidth: [selectedCascadeDay] }
     }));
   }
 
