@@ -1,0 +1,2065 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>India's Energy Nervous System — Intelligence Dashboard</title>
+<meta property="og:title" content="India's Energy Nervous System — Intelligence Dashboard">
+<meta property="og:description" content="39 trade routes. 23 refineries. 123 power plants. The Hormuz crisis visualized from official public data.">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://raw.githubusercontent.com/avyayalaya/pm-skills-arsenal/main/showcase/energy-dashboard-preview.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="India's Energy Nervous System">
+<meta name="twitter:description" content="Every vessel. Every plant. Every megawatt. The Hormuz crisis in real-time from public data.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
+<link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet">
+<script src="https://unpkg.com/deck.gl@8.9.35/dist.min.js"></script>
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --bg: #0a0e17;
+  --surface: #111827;
+  --border: #1e293b;
+  --text-primary: #e2e8f0;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --oil: #FFB347;
+  --coal: #A0A0A0;
+  --lng: #4FC3F7;
+  --refinery-high: #ef4444;
+  --refinery-med: #f59e0b;
+  --refinery-low: #22c55e;
+  --alert: #dc2626;
+  --accent: #3b82f6;
+  --green: #22c55e;
+  --font-data: 'JetBrains Mono', monospace;
+  --font-ui: 'DM Sans', sans-serif;
+}
+html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(--text-primary); font-family: var(--font-ui); }
+
+/* === LAYOUT === */
+#app {
+  display: grid;
+  grid-template-rows: 56px 1fr 80px;
+  grid-template-columns: 65fr 35fr;
+  height: 100vh;
+  gap: 0;
+}
+#header { grid-column: 1 / -1; grid-row: 1; }
+#map-panel { grid-column: 1; grid-row: 2; position: relative; }
+#detail-panel { grid-column: 2; grid-row: 2; }
+#bottom-bar { grid-column: 1 / -1; grid-row: 3; }
+
+/* === HEADER === */
+#header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 20px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  z-index: 100;
+}
+#header h1 {
+  font-family: var(--font-data); font-size: 15px; font-weight: 600;
+  letter-spacing: 1.5px; text-transform: uppercase;
+  background: linear-gradient(90deg, var(--text-primary), var(--oil));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.header-toggles { display: flex; gap: 6px; align-items: center; }
+.layer-toggle {
+  display: flex; align-items: center; gap: 5px;
+  padding: 4px 10px; border-radius: 4px;
+  background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+  cursor: pointer; font-size: 11px; font-family: var(--font-data);
+  color: var(--text-secondary); transition: all 0.2s;
+  user-select: none;
+}
+.layer-toggle.active { border-color: rgba(255,255,255,0.2); color: var(--text-primary); background: rgba(255,255,255,0.08); }
+.layer-toggle .dot { width: 8px; height: 8px; border-radius: 50%; }
+.header-timeline { display: flex; align-items: center; gap: 8px; }
+.timeline-label { font-family: var(--font-data); font-size: 9px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
+.timeline-track { display: flex; align-items: center; gap: 0; }
+.timeline-btn {
+  padding: 4px 8px; border: 1px solid var(--border); border-radius: 3px;
+  background: transparent; color: var(--text-muted); cursor: pointer;
+  font-family: var(--font-data); font-size: 9px; text-align: center; line-height: 1.3;
+  transition: all 0.2s;
+}
+.timeline-btn span { font-size: 8px; color: var(--text-muted); }
+.timeline-btn.active { background: rgba(239,68,68,0.15); border-color: var(--alert); color: var(--text-primary); }
+.timeline-btn.active span { color: var(--alert); }
+.timeline-btn:hover { border-color: rgba(255,255,255,0.3); }
+.timeline-connector { width: 12px; height: 2px; background: var(--border); }
+.timeline-connector.active { background: var(--alert); }
+
+/* === MAP === */
+#map-panel { background: var(--bg); }
+#map-container { width: 100%; height: 100%; }
+#deck-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
+.maplibregl-ctrl-bottom-left, .maplibregl-ctrl-bottom-right { display: none; }
+
+/* Map tooltip */
+#map-tooltip {
+  position: absolute; pointer-events: none; z-index: 200;
+  background: rgba(17,24,39,0.95); backdrop-filter: blur(12px);
+  border: 1px solid var(--border); border-radius: 6px;
+  padding: 10px 14px; max-width: 320px;
+  font-family: var(--font-data); font-size: 11px; color: var(--text-primary);
+  display: none; line-height: 1.5;
+}
+#map-tooltip .tt-title { font-weight: 600; font-size: 12px; margin-bottom: 4px; }
+#map-tooltip .tt-row { display: flex; justify-content: space-between; gap: 12px; }
+#map-tooltip .tt-label { color: var(--text-secondary); }
+#map-tooltip .tt-value { color: var(--text-primary); font-weight: 500; }
+
+/* === DETAIL PANEL === */
+#detail-panel {
+  background: var(--surface);
+  border-left: 1px solid var(--border);
+  overflow-y: auto; overflow-x: hidden;
+  scrollbar-width: thin; scrollbar-color: var(--border) transparent;
+}
+#detail-panel::-webkit-scrollbar { width: 5px; }
+#detail-panel::-webkit-scrollbar-track { background: transparent; }
+#detail-panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+.detail-content { padding: 16px 18px; }
+.detail-section { margin-bottom: 18px; }
+.detail-title {
+  font-family: var(--font-data); font-size: 13px; font-weight: 600;
+  letter-spacing: 1px; text-transform: uppercase;
+  margin-bottom: 10px; color: var(--text-primary);
+}
+.detail-divider {
+  height: 1px; background: linear-gradient(90deg, var(--oil), var(--border));
+  margin-bottom: 12px;
+}
+.stat-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.03);
+  font-family: var(--font-data); font-size: 12px;
+}
+.stat-label { color: var(--text-secondary); }
+.stat-value { color: var(--text-primary); font-weight: 500; }
+.stat-value.alert { color: var(--alert); }
+.stat-value.oil { color: var(--oil); }
+.stat-value.lng { color: var(--lng); }
+.stat-value.green { color: var(--green); }
+
+.expand-btn {
+  display: inline-flex; align-items: center; gap: 4px;
+  color: var(--lng); font-family: var(--font-data); font-size: 11px;
+  cursor: pointer; border: none; background: none;
+  padding: 2px 0; transition: color 0.2s;
+}
+.expand-btn:hover { color: var(--text-primary); }
+.expand-content { display: none; margin-top: 6px; padding-left: 8px; border-left: 2px solid var(--border); }
+.expand-content.visible { display: block; }
+.expand-content .detail-row {
+  display: grid; grid-template-columns: 1fr 60px 70px 60px;
+  padding: 3px 0; font-family: var(--font-data); font-size: 11px;
+  border-bottom: 1px solid rgba(255,255,255,0.02);
+}
+.expand-content .detail-row .country { color: var(--text-primary); }
+.expand-content .detail-row .pct { color: var(--oil); text-align: right; }
+.expand-content .detail-row .vol { color: var(--text-secondary); text-align: right; }
+.expand-content .detail-row .mbd { color: var(--text-muted); text-align: right; }
+
+.source-link {
+  color: var(--lng); text-decoration: none; font-family: var(--font-data);
+  font-size: 10px; display: inline-block; margin-top: 4px;
+  opacity: 0.7; transition: opacity 0.2s;
+}
+.source-link:hover { opacity: 1; text-decoration: underline; }
+
+/* Bar chart inline */
+.bar-container { display: flex; align-items: center; gap: 6px; margin: 2px 0; }
+.bar-label { font-family: var(--font-data); font-size: 11px; color: var(--text-secondary); width: 60px; text-align: right; }
+.bar-track { flex: 1; height: 10px; background: rgba(255,255,255,0.04); border-radius: 2px; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 2px; transition: width 0.5s ease; }
+.bar-value { font-family: var(--font-data); font-size: 11px; color: var(--text-primary); width: 40px; }
+
+/* Refinery detail */
+.refinery-card, .state-card, .chokepoint-card {
+  background: rgba(255,255,255,0.02); border: 1px solid var(--border);
+  border-radius: 6px; padding: 14px; margin-bottom: 12px;
+}
+.refinery-card .name { font-family: var(--font-data); font-size: 14px; font-weight: 700; margin-bottom: 2px; }
+.refinery-card .operator { font-family: var(--font-data); font-size: 11px; color: var(--text-secondary); margin-bottom: 8px; }
+.refinery-card .meta-row {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 4px; margin-bottom: 10px;
+}
+.refinery-card .meta-item { font-family: var(--font-data); font-size: 11px; }
+.refinery-card .meta-item .meta-label { color: var(--text-muted); font-size: 9px; text-transform: uppercase; letter-spacing: 0.5px; }
+.refinery-card .meta-item .meta-val { color: var(--text-primary); font-weight: 500; }
+
+/* Crisis cascade */
+.cascade-narrative {
+  font-family: var(--font-data); font-size: 11px; line-height: 1.6;
+  color: var(--text-secondary);
+}
+.cascade-narrative li { margin-bottom: 4px; list-style: none; }
+.cascade-narrative li::before { content: ""; color: var(--alert); margin-right: 6px; }
+
+/* State card gen mix */
+.gen-mix-row { display: flex; align-items: center; gap: 6px; margin: 3px 0; }
+.gen-mix-label { width: 55px; font-family: var(--font-data); font-size: 10px; color: var(--text-secondary); text-align: right; }
+.gen-mix-bar { flex: 1; height: 8px; background: rgba(255,255,255,0.04); border-radius: 2px; overflow: hidden; }
+.gen-mix-fill { height: 100%; border-radius: 2px; }
+.gen-mix-value { width: 55px; font-family: var(--font-data); font-size: 10px; color: var(--text-primary); }
+
+/* Vulnerability badge */
+.vuln-badge {
+  display: inline-block; padding: 2px 8px; border-radius: 3px;
+  font-family: var(--font-data); font-size: 10px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+.vuln-extreme { background: rgba(220,38,38,0.2); color: #ef4444; }
+.vuln-high { background: rgba(239,68,68,0.15); color: #f87171; }
+.vuln-moderate-high { background: rgba(245,158,11,0.15); color: #f59e0b; }
+.vuln-moderate { background: rgba(245,158,11,0.12); color: #fbbf24; }
+.vuln-low-moderate { background: rgba(234,179,8,0.1); color: #facc15; }
+.vuln-low { background: rgba(34,197,94,0.1); color: #4ade80; }
+.vuln-minimal { background: rgba(34,197,94,0.08); color: #22c55e; }
+
+/* Back button */
+.back-btn {
+  display: inline-flex; align-items: center; gap: 4px;
+  color: var(--text-muted); font-family: var(--font-data); font-size: 11px;
+  cursor: pointer; border: none; background: none; padding: 4px 0; margin-bottom: 8px;
+}
+.back-btn:hover { color: var(--text-primary); }
+
+/* === BOTTOM BAR / SIGNAL BAR === */
+#bottom-bar {
+  display: flex; align-items: stretch; justify-content: space-between;
+  padding: 8px 16px;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  font-family: var(--font-data); font-size: 11px;
+  min-height: 80px;
+  gap: 8px;
+}
+.signal-bar { display: flex; gap: 10px; flex: 1; align-items: stretch; }
+.signal-card {
+  flex: 1; max-width: 200px; min-width: 160px;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 10px 6px 10px;
+  cursor: pointer;
+  transition: all 0.25s;
+  display: flex; flex-direction: column; justify-content: space-between;
+}
+.signal-card:hover {
+  border-color: rgba(255,255,255,0.25);
+  box-shadow: 0 0 12px rgba(255,255,255,0.04);
+  background: rgba(255,255,255,0.04);
+}
+.signal-card-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 3px;
+}
+.signal-card-name {
+  font-family: var(--font-data); font-size: 10px; font-weight: 600;
+  letter-spacing: 0.8px; text-transform: uppercase;
+  color: var(--text-secondary);
+}
+.signal-confidence {
+  display: flex; align-items: center; gap: 3px;
+  font-family: var(--font-data); font-size: 9px; font-weight: 600;
+  color: var(--text-muted);
+}
+.signal-confidence .conf-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+}
+.conf-dot.high { background: var(--green); }
+.conf-dot.medium { background: #facc15; }
+.signal-card-value-row {
+  display: flex; align-items: baseline; gap: 6px;
+  margin-bottom: 4px;
+}
+.signal-card-value {
+  font-family: var(--font-data); font-size: 15px; font-weight: 700;
+  color: var(--text-primary);
+}
+.signal-card-change {
+  font-family: var(--font-data); font-size: 11px; font-weight: 600;
+}
+.signal-card-change.bad { color: var(--alert); }
+.signal-card-change.good { color: var(--green); }
+.sparkline {
+  display: flex; align-items: flex-end; gap: 2px;
+  height: 20px; margin-bottom: 3px;
+}
+.spark-bar {
+  width: 4px; border-radius: 1px;
+  transition: height 0.3s;
+}
+.signal-card-source {
+  font-family: var(--font-data); font-size: 8px;
+  color: var(--text-muted); letter-spacing: 0.3px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.signal-bar-actions {
+  display: flex; flex-direction: column; align-items: flex-end;
+  justify-content: space-between; gap: 4px; min-width: 110px;
+}
+.more-signals-btn {
+  color: var(--lng); border: 1px solid var(--border); background: transparent;
+  cursor: pointer; font-family: var(--font-data); font-size: 10px;
+  padding: 6px 10px; border-radius: 4px;
+  letter-spacing: 0.5px; text-transform: uppercase;
+  transition: all 0.2s; white-space: nowrap;
+}
+.more-signals-btn:hover {
+  color: var(--text-primary); border-color: rgba(255,255,255,0.3);
+  background: rgba(255,255,255,0.04);
+}
+#sources-btn {
+  color: var(--lng); border: none; background: none;
+  cursor: pointer; font-family: var(--font-data); font-size: 11px;
+}
+#sources-panel {
+  display: none; position: fixed; bottom: 84px; right: 20px;
+  width: 360px; max-height: 400px; overflow-y: auto;
+  background: rgba(17,24,39,0.97); backdrop-filter: blur(16px);
+  border: 1px solid var(--border); border-radius: 8px;
+  padding: 16px; z-index: 300;
+}
+#sources-panel.visible { display: block; }
+#sources-panel h3 { font-family: var(--font-data); font-size: 12px; margin-bottom: 10px; }
+#sources-panel a {
+  display: block; color: var(--lng); text-decoration: none;
+  font-family: var(--font-data); font-size: 11px;
+  padding: 3px 0; opacity: 0.8;
+}
+#sources-panel a:hover { opacity: 1; text-decoration: underline; }
+
+/* Share button */
+.share-btn {
+  color: var(--text-secondary); border: 1px solid var(--border); background: transparent;
+  cursor: pointer; font-family: var(--font-data); font-size: 11px;
+  padding: 4px 10px; border-radius: 4px; margin-left: 8px;
+  transition: all 0.2s;
+}
+.share-btn:hover { color: var(--text-primary); border-color: rgba(255,255,255,0.3); background: rgba(255,255,255,0.04); }
+
+/* GeoJSON fallback indicator */
+.geojson-fallback-note {
+  font-family: var(--font-data); font-size: 9px; color: var(--text-muted);
+  font-style: italic; margin-top: 4px;
+}
+
+/* Chokepoint pulse animation */
+@keyframes pulse-ring {
+  0% { transform: scale(1); opacity: 0.8; }
+  100% { transform: scale(2.5); opacity: 0; }
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+  #app { grid-template-columns: 1fr; grid-template-rows: 56px 50vh 1fr auto; }
+  #map-panel { grid-column: 1; grid-row: 2; }
+  #detail-panel { grid-column: 1; grid-row: 3; max-height: 50vh; }
+  #bottom-bar { grid-row: 4; flex-wrap: wrap; min-height: auto; }
+  .signal-card { min-width: 140px; }
+}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- HEADER -->
+<header id="header">
+  <h1>India's Energy Nervous System</h1>
+  <div class="header-toggles">
+    <div class="layer-toggle active" data-layer="routes-oil" onclick="toggleLayer(this)">
+      <span class="dot" style="background:var(--oil)"></span>Oil
+    </div>
+    <div class="layer-toggle active" data-layer="routes-coal" onclick="toggleLayer(this)">
+      <span class="dot" style="background:var(--coal)"></span>Coal
+    </div>
+    <div class="layer-toggle active" data-layer="routes-lng" onclick="toggleLayer(this)">
+      <span class="dot" style="background:var(--lng)"></span>LNG
+    </div>
+    <div class="layer-toggle active" data-layer="refineries" onclick="toggleLayer(this)">
+      <span class="dot" style="background:var(--refinery-high)"></span>Refineries
+    </div>
+    <div class="layer-toggle" data-layer="plants" onclick="toggleLayer(this)">
+      <span class="dot" style="background:var(--green)"></span>Plants
+    </div>
+    <div class="layer-toggle active" data-layer="vulnerability" onclick="toggleLayer(this)">
+      <span class="dot" style="background:var(--alert)"></span>Vulnerability
+    </div>
+  </div>
+  <div class="header-timeline">
+    <span class="timeline-label">CRISIS TIMELINE</span>
+    <div class="timeline-track">
+      <button class="timeline-btn" data-day="day0" onclick="selectCascadeDay('day0')">FEB 27<br><span>PRE-CRISIS</span></button>
+      <div class="timeline-connector"></div>
+      <button class="timeline-btn" data-day="day1" onclick="selectCascadeDay('day1')">FEB 28<br><span>DAY 1</span></button>
+      <div class="timeline-connector active"></div>
+      <button class="timeline-btn" data-day="day7" onclick="selectCascadeDay('day7')">MAR 7<br><span>DAY 7</span></button>
+      <div class="timeline-connector active"></div>
+      <button class="timeline-btn" data-day="day30" onclick="selectCascadeDay('day30')">MAR 30<br><span>DAY 30</span></button>
+      <div class="timeline-connector active"></div>
+      <button class="timeline-btn" data-day="day90" onclick="selectCascadeDay('day90')">MAY 29<br><span>DAY 90</span></button>
+      <div class="timeline-connector"></div>
+      <button class="timeline-btn active" data-day="today" onclick="selectCascadeDay('today')">APR 2<br><span>TODAY</span></button>
+    </div>
+  </div>
+</header>
+
+<!-- MAP -->
+<div id="map-panel">
+  <div id="map-container"></div>
+  <canvas id="deck-canvas"></canvas>
+  <div id="map-tooltip"></div>
+</div>
+
+<!-- DETAIL PANEL -->
+<div id="detail-panel">
+  <div id="detail-default" class="detail-content"></div>
+  <div id="detail-entity" class="detail-content" style="display:none;"></div>
+</div>
+
+<!-- SIGNAL BAR (replaces bottom stats bar — S.1 from PLN-014) -->
+<div id="bottom-bar">
+  <div class="signal-bar" id="signal-bar"></div>
+  <div class="signal-bar-actions">
+    <button class="more-signals-btn" onclick="alert('Expandable signal categories coming in S.2')">MORE SIGNALS &#9656;</button>
+    <div style="display:flex;align-items:center;gap:4px">
+      <button class="share-btn" onclick="copyShareLink()" title="Copy link">&#128203; Share</button>
+      <button id="sources-btn" onclick="toggleSources()">Sources &#9656;</button>
+    </div>
+  </div>
+</div>
+
+<!-- SOURCES PANEL -->
+<div id="sources-panel">
+  <h3>DATA SOURCES</h3>
+  <div style="font-family:var(--font-data);font-size:9px;color:var(--text-muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px">Official / Primary Sources Only</div>
+  <a href="https://ppac.gov.in/import-export" target="_blank">PPAC — Crude Oil &amp; Petroleum Import/Export Data</a>
+  <a href="https://ppac.gov.in/infrastructure/installed-refinery-capacity" target="_blank">PPAC — Installed Refinery Capacity</a>
+  <a href="https://ppac.gov.in/prices/international-prices-of-crude-oil" target="_blank">PPAC — Indian Basket Crude Price</a>
+  <a href="https://ppac.gov.in/natural-gas/import" target="_blank">PPAC — LNG Import Data</a>
+  <a href="https://ppac.gov.in/crude-oil/import" target="_blank">PPAC — Monthly Crude Oil Import by Source Country</a>
+  <a href="https://ppac.gov.in/lpg/import" target="_blank">PPAC — LPG Import Data</a>
+  <a href="https://ppac.gov.in/crude-oil/refinery-throughput" target="_blank">PPAC — Refinery Throughput Data</a>
+  <a href="https://www.eia.gov/dnav/pet/pet_pri_spt_s1_d.htm" target="_blank">EIA — Brent Crude Spot Prices (Daily)</a>
+  <a href="https://www.iea.org/reports/oil-market-report-march-2026" target="_blank">IEA — Oil Market Report, March 2026</a>
+  <a href="https://www.iea.org/news/update-on-iea-collective-action-decision-of-11-march-2026" target="_blank">IEA — Collective Action Decision (SPR Release), Mar 11</a>
+  <a href="https://portwatch.imf.org/pages/chokepoint6" target="_blank">IMF PortWatch — Strait of Hormuz Daily Transit Data</a>
+  <a href="https://ember-energy.org/data/yearly-electricity-data/" target="_blank">Ember — Yearly Electricity Data (2024)</a>
+  <a href="https://ember-energy.org/data/india-electricity-data/" target="_blank">Ember — India State-Level Electricity Data</a>
+  <a href="https://cea.nic.in/installed-capacity-report/" target="_blank">CEA — Installed Generation Capacity Report</a>
+  <a href="https://www.pib.gov.in/PressReleasePage.aspx?PRID=2238525&reg=3&lang=1" target="_blank">PIB — Energy Supplies Remain Secure (Official Statement)</a>
+  <a href="https://www.mea.gov.in/press-releases.htm" target="_blank">MEA — Press Releases (Strait of Hormuz Situation)</a>
+  <a href="https://isprl.co.in/" target="_blank">ISPRL — Indian Strategic Petroleum Reserves Ltd</a>
+  <a href="https://www.lloydslist.com/" target="_blank">Lloyd's List — Vessel Transit &amp; Maritime Intelligence</a>
+  <a href="https://polymarket.com/" target="_blank">Polymarket — Prediction Market (Hormuz Disruption Odds)</a>
+  <a href="https://commerce.gov.in/trade-statistics/" target="_blank">DGCI&amp;S / Ministry of Commerce — Trade Statistics</a>
+  <a href="https://rbi.org.in/Scripts/PublicationsView.aspx" target="_blank">RBI — Monetary Policy Statement / Macroeconomic Projections</a>
+  <a href="https://meritindia.in/" target="_blank">MERIT India — Plant-Level Merit Order Dispatch Data (Ministry of Power)</a>
+</div>
+</div>
+
+<script>
+// ============================================================
+// DATA LAYER — All data embedded inline
+// ============================================================
+
+const ROUTES = [
+  {id:"gulf_oil_jamnagar",from:{lat:26.50,lng:51.50,name:"Persian Gulf"},to:{lat:22.42,lng:69.84,name:"Jamnagar (Sikka/Vadinar)"},commodity:"oil",volume_mtpa:48.0,volume_mbd:0.96,chokepoints:["hormuz"],transit_days:6,note:"Reliance Jamnagar complex - world's largest refinery (68.2 MMTPA)"},
+  {id:"gulf_oil_mumbai",from:{lat:26.50,lng:51.50,name:"Persian Gulf"},to:{lat:18.95,lng:72.84,name:"Mumbai Port / JNPT"},commodity:"oil",volume_mtpa:21.5,volume_mbd:0.43,chokepoints:["hormuz"],transit_days:7,note:"BPCL Mumbai (12 MMTPA) + HPCL Mumbai (9.5 MMTPA)"},
+  {id:"gulf_oil_mangalore",from:{lat:26.50,lng:51.50,name:"Persian Gulf"},to:{lat:12.916,lng:74.812,name:"New Mangalore (MRPL)"},commodity:"oil",volume_mtpa:15.0,volume_mbd:0.30,chokepoints:["hormuz"],transit_days:7,note:"MRPL refinery (15 MMTPA, ONGC). SPR nearby (1.5 MMT)."},
+  {id:"gulf_oil_kochi",from:{lat:26.50,lng:51.50,name:"Persian Gulf"},to:{lat:9.966,lng:76.267,name:"Kochi Port"},commodity:"oil",volume_mtpa:15.5,volume_mbd:0.31,chokepoints:["hormuz"],transit_days:6,note:"BPCL Kochi Refinery (15.5 MMTPA)"},
+  {id:"gulf_oil_vadinar",from:{lat:26.50,lng:51.50,name:"Persian Gulf"},to:{lat:22.46,lng:69.68,name:"Vadinar (Nayara)"},commodity:"oil",volume_mtpa:20.0,volume_mbd:0.40,chokepoints:["hormuz"],transit_days:5,note:"Nayara Energy (Rosneft-backed), 20 MMTPA"},
+  {id:"qatar_lng_dahej",from:{lat:25.93,lng:51.57,name:"Qatar (Ras Laffan)"},to:{lat:21.713,lng:72.586,name:"Dahej LNG"},commodity:"lng",volume_mtpa:8.5,chokepoints:["hormuz"],transit_days:5,note:"Petronet LNG 8.5 MMTPA contract. India's largest LNG terminal (17.5 MMTPA)."},
+  {id:"qatar_lng_hazira",from:{lat:25.93,lng:51.57,name:"Qatar (Ras Laffan)"},to:{lat:21.103,lng:72.634,name:"Hazira LNG"},commodity:"lng",volume_mtpa:3.0,chokepoints:["hormuz"],transit_days:5,note:"Shell-TOTAL, 5 MMTPA"},
+  {id:"qatar_lng_kochi",from:{lat:25.93,lng:51.57,name:"Qatar (Ras Laffan)"},to:{lat:9.966,lng:76.267,name:"Kochi LNG"},commodity:"lng",volume_mtpa:3.0,chokepoints:["hormuz"],transit_days:5,note:"Petronet LNG Kochi, 5 MMTPA"},
+  {id:"qatar_lng_ennore",from:{lat:25.93,lng:51.57,name:"Qatar (Ras Laffan)"},to:{lat:13.22,lng:80.32,name:"Ennore / Kamarajar"},commodity:"lng",volume_mtpa:3.0,chokepoints:["hormuz"],transit_days:6,note:"Indian Oil LNG terminal, 5 MMTPA"},
+  {id:"russia_baltic_jamnagar",from:{lat:59.68,lng:28.40,name:"Russia Baltic (Ust-Luga)"},to:{lat:22.42,lng:69.84,name:"Jamnagar"},commodity:"oil",volume_mtpa:22.5,volume_mbd:0.45,chokepoints:["suez_or_cape"],transit_days:42,note:"Baltic -> Atlantic -> Suez/Cape -> Indian Ocean. 35-50 days."},
+  {id:"russia_baltic_mumbai",from:{lat:59.68,lng:28.40,name:"Russia Baltic (Ust-Luga)"},to:{lat:18.95,lng:72.84,name:"Mumbai Port"},commodity:"oil",volume_mtpa:15.0,volume_mbd:0.30,chokepoints:["suez_or_cape"],transit_days:42,note:"Russia's largest crude export route to India via Baltic"},
+  {id:"russia_baltic_vadinar",from:{lat:59.68,lng:28.40,name:"Russia Baltic (Ust-Luga)"},to:{lat:22.46,lng:69.68,name:"Vadinar (Nayara)"},commodity:"oil",volume_mtpa:7.5,volume_mbd:0.15,chokepoints:["suez_or_cape"],transit_days:40,note:"Rosneft-backed Nayara - natural destination for Russian crude"},
+  {id:"russia_pacific_paradip",from:{lat:42.73,lng:133.00,name:"Russia Pacific (Kozmino)"},to:{lat:20.264,lng:86.672,name:"Paradip Port"},commodity:"oil",volume_mtpa:15.0,volume_mbd:0.30,chokepoints:["malacca"],transit_days:27,note:"ESPO blend via Malacca/Lombok"},
+  {id:"russia_pacific_vizag",from:{lat:42.73,lng:133.00,name:"Russia Pacific (Kozmino)"},to:{lat:17.687,lng:83.296,name:"Visakhapatnam"},commodity:"oil",volume_mtpa:15.0,volume_mbd:0.30,chokepoints:["malacca"],transit_days:28,note:"HPCL Vizag (15.3 MMTPA). SPR nearby (1.33 MMT)."},
+  {id:"russia_pacific_jamnagar",from:{lat:42.73,lng:133.00,name:"Russia Pacific (Kozmino)"},to:{lat:22.42,lng:69.84,name:"Jamnagar"},commodity:"oil",volume_mtpa:15.0,volume_mbd:0.30,chokepoints:["malacca"],transit_days:30,note:"Pacific -> Malacca -> Indian Ocean -> Gujarat"},
+  {id:"indonesia_coal_mundra",from:{lat:-3.32,lng:114.59,name:"Indonesia (Kalimantan)"},to:{lat:22.739,lng:69.719,name:"Mundra Port"},commodity:"coal",volume_mtpa:25.0,chokepoints:["malacca"],transit_days:14,note:"Tata Power UMPP (4 GW). India's largest private port."},
+  {id:"indonesia_coal_paradip",from:{lat:-3.32,lng:114.59,name:"Indonesia (Kalimantan)"},to:{lat:20.264,lng:86.672,name:"Paradip Port"},commodity:"coal",volume_mtpa:30.0,chokepoints:["malacca"],transit_days:12,note:"Largest coal import port."},
+  {id:"indonesia_coal_dhamra",from:{lat:-3.32,lng:114.59,name:"Indonesia (Kalimantan)"},to:{lat:20.776,lng:86.953,name:"Dhamra Port"},commodity:"coal",volume_mtpa:20.0,chokepoints:["malacca"],transit_days:12,note:"Adani-operated. 8.21 MMT coal imports (FY24)."},
+  {id:"indonesia_coal_haldia",from:{lat:-3.32,lng:114.59,name:"Indonesia (Kalimantan)"},to:{lat:22.025,lng:88.058,name:"Haldia"},commodity:"coal",volume_mtpa:20.0,chokepoints:["malacca"],transit_days:13,note:"IOCL Haldia Refinery (8 MMTPA). 8.89 MMT coal (FY24)."},
+  {id:"indonesia_coal_gangavaram",from:{lat:-3.32,lng:114.59,name:"Indonesia (Kalimantan)"},to:{lat:17.62,lng:83.23,name:"Gangavaram Port"},commodity:"coal",volume_mtpa:15.0,chokepoints:["malacca"],transit_days:11,note:"7.0 MMT coal (FY24)."},
+  {id:"indonesia_coal_ennore",from:{lat:-3.32,lng:114.59,name:"Indonesia (Kalimantan)"},to:{lat:13.22,lng:80.32,name:"Ennore"},commodity:"coal",volume_mtpa:15.0,chokepoints:["malacca"],transit_days:10,note:"Thermal coal for Tamil Nadu power plants"},
+  {id:"australia_coal_paradip",from:{lat:-32.93,lng:151.78,name:"Australia (Newcastle)"},to:{lat:20.264,lng:86.672,name:"Paradip"},commodity:"coal",volume_mtpa:8.0,chokepoints:[],transit_days:18,note:"Coking (metallurgical) coal. Direct route."},
+  {id:"australia_coal_haldia",from:{lat:-32.93,lng:151.78,name:"Australia (Newcastle)"},to:{lat:22.025,lng:88.058,name:"Haldia"},commodity:"coal",volume_mtpa:6.0,chokepoints:[],transit_days:18,note:"Coking coal for eastern India steel plants"},
+  {id:"australia_coal_gangavaram",from:{lat:-32.93,lng:151.78,name:"Australia (Newcastle)"},to:{lat:17.62,lng:83.23,name:"Gangavaram"},commodity:"coal",volume_mtpa:6.0,chokepoints:[],transit_days:17,note:"Coking coal for AP steel/power"},
+  {id:"australia_coal_mundra",from:{lat:-32.93,lng:151.78,name:"Australia (Newcastle)"},to:{lat:22.739,lng:69.719,name:"Mundra"},commodity:"coal",volume_mtpa:6.0,chokepoints:[],transit_days:20,note:"Coking coal to Gujarat"},
+  {id:"sa_coal_paradip",from:{lat:-28.80,lng:32.08,name:"South Africa (Richards Bay)"},to:{lat:20.264,lng:86.672,name:"Paradip"},commodity:"coal",volume_mtpa:12.0,chokepoints:[],transit_days:14,note:"Direct Indian Ocean. Thermal + coking coal."},
+  {id:"sa_coal_haldia",from:{lat:-28.80,lng:32.08,name:"South Africa (Richards Bay)"},to:{lat:22.025,lng:88.058,name:"Haldia"},commodity:"coal",volume_mtpa:8.0,chokepoints:[],transit_days:14,note:"Thermal + coking coal to eastern India"},
+  {id:"sa_coal_gangavaram",from:{lat:-28.80,lng:32.08,name:"South Africa (Richards Bay)"},to:{lat:17.62,lng:83.23,name:"Gangavaram"},commodity:"coal",volume_mtpa:8.0,chokepoints:[],transit_days:13,note:"Coal to AP"},
+  {id:"sa_coal_mundra",from:{lat:-28.80,lng:32.08,name:"South Africa (Richards Bay)"},to:{lat:22.739,lng:69.719,name:"Mundra"},commodity:"coal",volume_mtpa:9.0,chokepoints:[],transit_days:15,note:"Coal to Gujarat"},
+  {id:"usa_lng_dahej",from:{lat:29.73,lng:-93.87,name:"USA (Sabine Pass)"},to:{lat:21.713,lng:72.586,name:"Dahej LNG"},commodity:"lng",volume_mtpa:1.5,chokepoints:["suez_or_cape"],transit_days:30,note:"US LNG exports to India surged 300%+ in 2025."},
+  {id:"usa_lng_hazira",from:{lat:29.73,lng:-93.87,name:"USA (Sabine Pass)"},to:{lat:21.103,lng:72.634,name:"Hazira LNG"},commodity:"lng",volume_mtpa:1.0,chokepoints:["suez_or_cape"],transit_days:30,note:"Shell-TOTAL terminal"},
+  {id:"usa_lng_dabhol",from:{lat:29.73,lng:-93.87,name:"USA (Sabine Pass)"},to:{lat:17.586,lng:73.173,name:"Dabhol LNG"},commodity:"lng",volume_mtpa:1.25,chokepoints:["suez_or_cape"],transit_days:30,note:"GAIL-operated, 5 MMTPA"},
+  {id:"usa_oil_jamnagar",from:{lat:29.73,lng:-93.87,name:"USA (Gulf of Mexico)"},to:{lat:22.42,lng:69.84,name:"Jamnagar"},commodity:"oil",volume_mtpa:8.5,volume_mbd:0.17,chokepoints:["suez_or_cape"],transit_days:32,note:"US crude exports surged 300%+ in 2025"},
+  {id:"wa_oil_jamnagar",from:{lat:2.0,lng:5.0,name:"West Africa (Nigeria/Angola)"},to:{lat:22.42,lng:69.84,name:"Jamnagar"},commodity:"oil",volume_mtpa:4.5,volume_mbd:0.09,chokepoints:["cape"],transit_days:22,note:"Nigeria (~2.5%) + Angola (~1.5%). Via Cape."},
+  {id:"wa_oil_mumbai",from:{lat:2.0,lng:5.0,name:"West Africa"},to:{lat:18.95,lng:72.84,name:"Mumbai Port"},commodity:"oil",volume_mtpa:3.0,volume_mbd:0.06,chokepoints:["cape"],transit_days:23,note:"West African light sweet crude"},
+  {id:"wa_oil_mangalore",from:{lat:2.0,lng:5.0,name:"West Africa"},to:{lat:12.916,lng:74.812,name:"New Mangalore"},commodity:"oil",volume_mtpa:2.0,volume_mbd:0.04,chokepoints:["cape"],transit_days:20,note:"West African crude to MRPL"},
+  {id:"au_lng_dahej",from:{lat:-23.85,lng:151.27,name:"Australia (Gladstone)"},to:{lat:21.713,lng:72.586,name:"Dahej LNG"},commodity:"lng",volume_mtpa:1.25,chokepoints:[],transit_days:18,note:"Australian LNG via Coral Sea -> Indian Ocean"},
+  {id:"au_lng_kochi",from:{lat:-23.85,lng:151.27,name:"Australia (Gladstone)"},to:{lat:9.966,lng:76.267,name:"Kochi LNG"},commodity:"lng",volume_mtpa:0.75,chokepoints:[],transit_days:16,note:"Shorter route to south India"},
+  {id:"au_lng_ennore",from:{lat:-23.85,lng:151.27,name:"Australia (Gladstone)"},to:{lat:13.22,lng:80.32,name:"Ennore"},commodity:"lng",volume_mtpa:0.75,chokepoints:[],transit_days:17,note:"LNG to Tamil Nadu"}
+];
+
+const REFINERIES = [
+  {id:1,name:"Jamnagar DTA",state:"Gujarat",lat:22.42,lng:69.84,capacity:33.0,owner:"Reliance Industries",hormuz:60,sources:{Iraq:25,Saudi:20,UAE:15,Russia:20,Others:20},crisis:"Running >100% utilization; blending Russian + residual Gulf crude"},
+  {id:2,name:"Jamnagar SEZ",state:"Gujarat",lat:22.44,lng:69.82,capacity:35.2,owner:"Reliance Industries",hormuz:55,sources:{Iraq:20,Saudi:15,UAE:10,Russia:30,Others:25},crisis:"SEZ uses non-Russian crude for sanction-compliant exports"},
+  {id:3,name:"Nayara Vadinar",state:"Gujarat",lat:22.46,lng:69.68,capacity:20.0,owner:"Nayara (Rosneft)",hormuz:35,sources:{Russia:40,Iraq:20,Saudi:15,Others:25},crisis:"Best-positioned for Russian crude; Rosneft supply advantage"},
+  {id:4,name:"IOCL Koyali",state:"Gujarat",lat:22.33,lng:73.13,capacity:13.7,owner:"IOCL",hormuz:70,sources:{Gulf_mix:70,Others:30},crisis:"Dependent on Salaya pipeline crude from west coast"},
+  {id:5,name:"IOCL Panipat",state:"Haryana",lat:29.39,lng:76.97,capacity:15.0,owner:"IOCL",hormuz:55,sources:{Gulf_mix:55,Mundra_pipeline:30,Others:15},crisis:"Dual pipeline feed provides partial diversification"},
+  {id:6,name:"IOCL Mathura",state:"Uttar Pradesh",lat:27.49,lng:77.67,capacity:8.0,owner:"IOCL",hormuz:70,sources:{Gulf_mix:70,Others:30},crisis:"Limited diversification; serves Delhi NCR"},
+  {id:7,name:"IOCL Paradip",state:"Odisha",lat:20.26,lng:86.67,capacity:15.0,owner:"IOCL",hormuz:40,sources:{Iraq:30,Russia:20,Others:50},crisis:"East coast enables diverse sourcing"},
+  {id:8,name:"IOCL Haldia",state:"West Bengal",lat:22.03,lng:88.06,capacity:7.5,owner:"IOCL",hormuz:40,sources:{Iraqi:30,Mixed:70},crisis:"Pipeline-fed via Paradip"},
+  {id:9,name:"IOCL Barauni",state:"Bihar",lat:25.47,lng:86.05,capacity:6.0,owner:"IOCL",hormuz:40,sources:{Mixed:100},crisis:"Smallest in Paradip cluster"},
+  {id:10,name:"BPCL Mumbai",state:"Maharashtra",lat:18.95,lng:72.84,capacity:12.0,owner:"BPCL",hormuz:55,sources:{Iraq:25,Saudi:20,UAE:15,Russia:15,Domestic:25},crisis:"Mumbai High domestic crude provides partial buffer"},
+  {id:11,name:"BPCL Kochi",state:"Kerala",lat:9.97,lng:76.27,capacity:15.5,owner:"BPCL",hormuz:75,sources:{Saudi:30,Iraq:25,UAE:20,Others:25},crisis:"Heavily Gulf-dependent; southern India fuel supply"},
+  {id:12,name:"BPCL Bina",state:"Madhya Pradesh",lat:24.18,lng:78.13,capacity:7.8,owner:"BPCL (BORL JV)",hormuz:60,sources:{Gulf_mix:60,Others:40},crisis:"Dependent on Vadinar-Bina pipeline"},
+  {id:13,name:"BPCL Numaligarh",state:"Assam",lat:26.64,lng:93.73,capacity:3.0,owner:"Oil India / BPCL",hormuz:10,sources:{Domestic_Assam:90,Others:10},crisis:"Currently insulated; expansion to 9 MMTPA will increase dependency"},
+  {id:14,name:"HPCL Vizag",state:"Andhra Pradesh",lat:17.69,lng:83.30,capacity:15.3,owner:"HPCL",hormuz:45,sources:{Russia:33,Gulf_mix:45,West_Africa:12,US:10},crisis:"Diversified sourcing; Russian share growing"},
+  {id:15,name:"HPCL Mumbai",state:"Maharashtra",lat:18.97,lng:72.82,capacity:9.5,owner:"HPCL",hormuz:40,sources:{Domestic:30,Gulf_mix:40,Others:30},crisis:"Mumbai High domestic = partial insulation"},
+  {id:16,name:"HMEL Bathinda",state:"Punjab",lat:30.21,lng:74.95,capacity:11.3,owner:"HPCL-Mittal JV",hormuz:55,sources:{Gulf_mix:55,Russian_STS:30,Others:15},crisis:"Mundra-Bathinda pipeline; received sanctioned Russian crude via STS"},
+  {id:17,name:"HRRL Barmer",state:"Rajasthan",lat:25.74,lng:71.39,capacity:9.0,owner:"HPCL-Rajasthan JV",hormuz:20,sources:{Azerbaijan:20,Libya:15,Angola:15,Nigeria:15,Domestic:20,Others:15},crisis:"Least Hormuz-exposed - deliberately diversified"},
+  {id:18,name:"MRPL Mangalore",state:"Karnataka",lat:12.92,lng:74.81,capacity:15.0,owner:"ONGC subsidiary",hormuz:85,sources:{Saudi:30,Iraq:25,UAE:20,Kuwait:10,Others:15},crisis:"Highest Gulf dependency. Suspended exports Mar 2026. Restarted Russian crude."},
+  {id:19,name:"CPCL Manali",state:"Tamil Nadu",lat:13.12,lng:80.28,capacity:10.5,owner:"IOCL subsidiary",hormuz:60,sources:{Gulf_mix:60,Russian:20,Others:20},crisis:"Serves Tamil Nadu fuel market"},
+  {id:20,name:"CPCL Nagapattinam",state:"Tamil Nadu",lat:10.76,lng:79.84,capacity:1.0,owner:"IOCL subsidiary",hormuz:20,sources:{Domestic:80,Others:20},crisis:"Tiny facility"},
+  {id:21,name:"IOCL Digboi",state:"Assam",lat:27.39,lng:95.62,capacity:0.65,owner:"IOCL",hormuz:0,sources:{Domestic_Assam:100},crisis:"India's oldest refinery (1901). Zero Hormuz exposure."},
+  {id:22,name:"IOCL Guwahati",state:"Assam",lat:26.15,lng:91.66,capacity:1.0,owner:"IOCL",hormuz:5,sources:{Domestic_Assam:95,Others:5},crisis:"Near-zero Hormuz exposure"},
+  {id:23,name:"ONGC Tatipaka",state:"Andhra Pradesh",lat:16.55,lng:81.92,capacity:0.078,owner:"ONGC",hormuz:0,sources:{Domestic_KG:100},crisis:"Zero Hormuz exposure - domestic micro-refinery"}
+];
+
+const PORTS = [
+  {id:"mundra",name:"Mundra Port",lat:22.739,lng:69.719,capacity:170,operator:"Adani Ports",commodities:["coal","oil","lng"],highlight:"India's largest private port. 4GW UMPP."},
+  {id:"jamnagar",name:"Sikka/Vadinar (Jamnagar)",lat:22.42,lng:69.84,capacity:68.2,operator:"Reliance Industries",commodities:["crude_oil","products"],highlight:"World's largest refinery complex"},
+  {id:"vadinar",name:"Vadinar (Nayara)",lat:22.46,lng:69.68,capacity:20.0,operator:"Nayara/Rosneft",commodities:["crude_oil","products"],highlight:"Rosneft-backed"},
+  {id:"dahej",name:"Dahej LNG",lat:21.713,lng:72.586,capacity:17.5,operator:"Petronet LNG",commodities:["lng"],highlight:"India's largest LNG terminal"},
+  {id:"hazira",name:"Hazira LNG",lat:21.103,lng:72.634,capacity:5.0,operator:"Shell/TOTAL",commodities:["lng"],highlight:null},
+  {id:"mumbai",name:"Mumbai Port / JNPT",lat:18.95,lng:72.84,capacity:21.5,operator:"BPCL/HPCL/MPA",commodities:["crude_oil","products"],highlight:"2 refineries (BPCL 12 + HPCL 9.5 MMTPA)"},
+  {id:"dabhol",name:"Dabhol (Ratnagiri) LNG",lat:17.586,lng:73.173,capacity:5.0,operator:"GAIL",commodities:["lng"],highlight:null},
+  {id:"mangalore",name:"New Mangalore Port",lat:12.916,lng:74.812,capacity:15.0,operator:"MRPL/ONGC",commodities:["crude_oil","lpg"],highlight:"SPR nearby (1.5 MMT)"},
+  {id:"kochi",name:"Kochi Port",lat:9.966,lng:76.267,capacity:20.5,operator:"Petronet LNG/BPCL",commodities:["lng","crude_oil"],highlight:"LNG (5 MMTPA) + Refinery (15.5 MMTPA)"},
+  {id:"ennore",name:"Ennore / Kamarajar",lat:13.22,lng:80.32,capacity:5.0,operator:"IOCL (LNG)",commodities:["coal","lng"],highlight:"Coal + LNG for Tamil Nadu"},
+  {id:"paradip",name:"Paradip Port",lat:20.264,lng:86.672,capacity:15.0,operator:"IOCL/PPA",commodities:["crude_oil","coal"],highlight:"Largest coal import port (11.34 MMT FY24)"},
+  {id:"dhamra",name:"Dhamra Port",lat:20.776,lng:86.953,capacity:8.21,operator:"Adani Ports",commodities:["coal"],highlight:"LNG terminal under development"},
+  {id:"haldia",name:"Haldia Dock Complex",lat:22.025,lng:88.058,capacity:8.0,operator:"IOCL/KPT",commodities:["crude_oil","coal"],highlight:"IOCL Haldia Refinery (8 MMTPA)"},
+  {id:"vizag",name:"Visakhapatnam Port",lat:17.687,lng:83.296,capacity:8.3,operator:"HPCL/VPT",commodities:["crude_oil","coal"],highlight:"SPR facility (1.33 MMT)"},
+  {id:"gangavaram",name:"Gangavaram Port",lat:17.62,lng:83.23,capacity:7.0,operator:"Adani Ports",commodities:["coal"],highlight:null}
+];
+
+const CHOKEPOINTS = [
+  {id:"hormuz",name:"Strait of Hormuz",lat:26.567,lng:56.25,flow_mbd:20.9,india_pct:45,status:"disrupted",risk:"critical",india_crude_pct:45,india_lng_pct:60,india_lpg_pct:90,bypass_mbd:7.4,crisis:"95.6% traffic decline in March 2026 [IMF PortWatch]. 181 ships vs 4,140 normal. Brent peaked at $126/bbl [EIA]."},
+  {id:"malacca",name:"Strait of Malacca",lat:2.5,lng:101.5,flow_mbd:23.2,india_pct:15,status:"normal",risk:"medium",crisis:"Primary route for Indonesian coal to India. Not directly affected by 2026 crisis."},
+  {id:"suez",name:"Suez Canal",lat:30.61,lng:32.42,flow_mbd:4.9,india_pct:5,status:"reduced",risk:"high",crisis:"Houthi disruptions. Many ships rerouting via Cape. +150% container rates."},
+  {id:"bab_el_mandeb",name:"Bab el-Mandeb",lat:12.583,lng:43.333,flow_mbd:8.5,india_pct:5,status:"disrupted",risk:"high",crisis:"Gateway to Red Sea/Suez. Significantly disrupted by Houthi attacks."},
+  {id:"cape",name:"Cape of Good Hope",lat:-34.357,lng:18.474,flow_mbd:9.1,india_pct:10,status:"increased",risk:"low",crisis:"Alternative route. Traffic up 45%."}
+];
+
+const STATES = [
+  {name:"Gujarat",lat:23.0,lng:72.0,vulnerability:"EXTREME",rank:1,refining_mmtpa:101.9,lng_terminals:"Dahej (17.5), Hazira (5.0), Mundra (5.0)",key_exposure:"40% of India's refining, 60% of LNG import capacity",gen:{coal:{gw:16.09,twh:84.62},gas:{gw:7.55,twh:9.83},solar:{gw:16.80,twh:17.37},wind:{gw:12.47,twh:24.64},nuclear:{gw:1.84,twh:10.92},hydro:{gw:2.10,twh:6.18}}},
+  {name:"Maharashtra",lat:19.5,lng:75.5,vulnerability:"HIGH",rank:2,refining_mmtpa:21.5,lng_terminals:"Dabhol (5.0)",key_exposure:"Gas generation + Mumbai refinery cluster",gen:{coal:{gw:24.01,twh:132.13},gas:{gw:3.21,twh:5.78},solar:{gw:8.99,twh:6.95},wind:{gw:5.22,twh:7.89},nuclear:{gw:1.40,twh:8.69},hydro:{gw:3.43,twh:5.85}}},
+  {name:"Kerala",lat:10.5,lng:76.5,vulnerability:"HIGH",rank:3,refining_mmtpa:15.5,lng_terminals:"Kochi (5.0)",key_exposure:"Kochi refinery + LNG both Hormuz-fed",gen:{hydro:{gw:3.0,twh:20.0},solar:{gw:1.0,twh:1.5}}},
+  {name:"Tamil Nadu",lat:11.0,lng:78.5,vulnerability:"HIGH",rank:4,refining_mmtpa:10.5,lng_terminals:"Ennore (5.0)",key_exposure:"Gas gen + LNG terminal + CPCL refinery",gen:{coal:{gw:14.16,twh:75.32},gas:{gw:1.02,twh:1.80},solar:{gw:9.52,twh:14.48},wind:{gw:11.41,twh:16.69},nuclear:{gw:2.44,twh:16.21},hydro:{gw:2.30,twh:4.63}}},
+  {name:"Karnataka",lat:15.0,lng:76.0,vulnerability:"MODERATE-HIGH",rank:5,refining_mmtpa:15.0,lng_terminals:"None",key_exposure:"MRPL 85% Hormuz-dependent. SPR at Mangalore (1.5 MMT).",gen:{coal:{gw:9.48,twh:43.78},solar:{gw:8.99,twh:15.40},wind:{gw:6.73,twh:12.76},hydro:{gw:4.94,twh:13.70},nuclear:{gw:0.88,twh:7.64}}},
+  {name:"Andhra Pradesh",lat:15.9,lng:79.7,vulnerability:"MODERATE-HIGH",rank:6,refining_mmtpa:15.3,lng_terminals:"None",key_exposure:"HPCL Vizag processes Gulf + Russian crude. SPR at Vizag.",gen:{coal:{gw:13.19,twh:71.66},solar:{gw:4.73,twh:7.98},wind:{gw:4.10,twh:7.42},gas:{gw:4.68,twh:0.04},hydro:{gw:1.77,twh:3.16}}},
+  {name:"Punjab",lat:31.0,lng:75.5,vulnerability:"MODERATE",rank:7,refining_mmtpa:11.3,lng_terminals:"None",key_exposure:"Bathinda refinery fed via Mundra-Bathinda pipeline",gen:{coal:{gw:6.0,twh:40.0}}},
+  {name:"Haryana",lat:29.0,lng:76.0,vulnerability:"MODERATE",rank:8,refining_mmtpa:15.0,lng_terminals:"None",key_exposure:"Panipat refinery fed by Salaya pipeline. Serves Delhi NCR.",gen:{coal:{gw:8.0,twh:50.0}}},
+  {name:"Uttar Pradesh",lat:27.0,lng:80.5,vulnerability:"MODERATE",rank:9,refining_mmtpa:8.0,lng_terminals:"None",key_exposure:"Mathura fed by Salaya pipeline. Gas gen is small.",gen:{coal:{gw:26.72,twh:158.77},solar:{gw:3.35,twh:4.60},gas:{gw:1.49,twh:1.26},hydro:{gw:0.55,twh:1.28}}},
+  {name:"Odisha",lat:20.5,lng:84.0,vulnerability:"MODERATE",rank:10,refining_mmtpa:15.0,lng_terminals:"None",key_exposure:"Paradip = mixed crude. Major coal import port. SPR planned.",gen:{coal:{gw:9.60,twh:68.13},hydro:{gw:2.27,twh:6.84},solar:{gw:0.62,twh:0.78}}},
+  {name:"Rajasthan",lat:26.5,lng:73.5,vulnerability:"LOW-MODERATE",rank:11,refining_mmtpa:9.0,lng_terminals:"None",key_exposure:"Barmer new + diversified. Solar capital of India.",gen:{coal:{gw:10.78,twh:64.46},solar:{gw:26.49,twh:46.04},wind:{gw:5.20,twh:7.03},nuclear:{gw:1.18,twh:7.61},gas:{gw:1.02,twh:0.89}}},
+  {name:"Madhya Pradesh",lat:23.5,lng:78.5,vulnerability:"LOW-MODERATE",rank:12,refining_mmtpa:7.8,lng_terminals:"None",key_exposure:"Bina fed by Vadinar-Bina pipeline",gen:{coal:{gw:22.0,twh:146.31},solar:{gw:4.97,twh:6.03},wind:{gw:2.84,twh:4.70},hydro:{gw:2.36,twh:7.86}}},
+  {name:"West Bengal",lat:23.0,lng:87.5,vulnerability:"LOW",rank:13,refining_mmtpa:7.5,lng_terminals:"None",key_exposure:"Haldia processes mixed crude. Coal via Haldia (Malacca route).",gen:{coal:{gw:13.49,twh:92.60},hydro:{gw:1.44,twh:2.82}}},
+  {name:"Chhattisgarh",lat:21.5,lng:82.0,vulnerability:"MINIMAL",rank:14,refining_mmtpa:0,lng_terminals:"None",key_exposure:"Zero: no refineries, no LNG, no gas gen. Pure coal.",gen:{coal:{gw:23.69,twh:164.48},solar:{gw:1.34,twh:1.41}}},
+  {name:"Bihar",lat:25.6,lng:85.1,vulnerability:"LOW",rank:15,refining_mmtpa:6.0,lng_terminals:"None",key_exposure:"Barauni small; pipeline-fed from Paradip",gen:{coal:{gw:4.0,twh:20.0}}},
+  {name:"Telangana",lat:17.5,lng:78.5,vulnerability:"LOW",rank:16,refining_mmtpa:0,lng_terminals:"None",key_exposure:"No direct energy infra exposure. Coal-dominant.",gen:{coal:{gw:9.44,twh:57.26},solar:{gw:4.84,twh:6.84},hydro:{gw:2.50,twh:5.04}}},
+  {name:"Himachal Pradesh",lat:32.0,lng:77.0,vulnerability:"MINIMAL",rank:17,refining_mmtpa:0,lng_terminals:"None",key_exposure:"~100% hydro. Completely insulated.",gen:{hydro:{gw:11.28,twh:42.76}}}
+];
+
+// 123 MERIT plants with coordinates (from 335 total across 6 states)
+// Includes all generating units — some share physical location but represent distinct merit-order entries
+// Source: MERIT India (meritindia.in) — Ministry of Power, Government of India
+const MERIT_PLANTS = [
+  // === GUJARAT (27 plants with coordinates) ===
+  {n:"Kadana Hydro Power Station",s:"Gujarat",la:22.35,ln:73.567,f:"hydro",mw:240,o:"GSECL",r:1,vc:0,sc:772},
+  {n:"Ukai Hydro Power Station",s:"Gujarat",la:21.27,ln:73.583,f:"hydro",mw:300,o:"GSECL",r:2,vc:0,sc:0},
+  {n:"Dhuvaran CCPP-I (GAIL APM)",s:"Gujarat",la:22.267,ln:72.7,f:"gas",mw:107,o:"GSECL",r:3,vc:0,sc:0},
+  {n:"Dhuvaran CCPP-II (GAIL APM)",s:"Gujarat",la:22.267,ln:72.7,f:"gas",mw:112,o:"GSECL",r:4,vc:0,sc:0},
+  {n:"Dhuvaran CCPP-I (ONGC)",s:"Gujarat",la:22.267,ln:72.7,f:"gas",mw:107,o:"GSECL",r:5,vc:0,sc:0},
+  {n:"Dhuvaran CCPP-II (ONGC)",s:"Gujarat",la:22.267,ln:72.7,f:"gas",mw:112,o:"GSECL",r:6,vc:0,sc:28888},
+  {n:"Gujarat Industries Power",s:"Gujarat",la:22.267,ln:72.7,f:"gas",mw:145,o:"GIPCL",r:7,vc:0,sc:0},
+  {n:"Dhuvaran CCPP-I (GAIL SPOT)",s:"Gujarat",la:22.267,ln:72.7,f:"gas",mw:107,o:"GSECL",r:10,vc:0,sc:0},
+  {n:"Dhuvaran CCPP-I (GSPC SPOT)",s:"Gujarat",la:22.267,ln:72.7,f:"gas",mw:107,o:"GSECL",r:11,vc:0,sc:0},
+  {n:"Dhuvaran CCPP-II (GAIL SPOT)",s:"Gujarat",la:22.267,ln:72.7,f:"gas",mw:112,o:"GSECL",r:12,vc:0,sc:0},
+  {n:"Dhuvaran CCPP-III (GAIL SPOT)",s:"Gujarat",la:22.267,ln:72.7,f:"gas",mw:376,o:"GSECL",r:15,vc:0,sc:0},
+  {n:"ACB India Limited",s:"Gujarat",la:21.74,ln:72.27,f:"coal",mw:270,o:"ACB India",r:18,vc:1.09,sc:3394},
+  {n:"Mauda-II (GJ alloc)",s:"Gujarat",la:21.283,ln:79.067,f:"coal",mw:1320,o:"NTPC",r:41,vc:3.20,sc:7572},
+  {n:"Mauda-I (GJ alloc)",s:"Gujarat",la:21.283,ln:79.067,f:"coal",mw:1000,o:"NTPC",r:43,vc:3.22,sc:6862},
+  {n:"Mundra UMPP",s:"Gujarat",la:22.739,ln:69.719,f:"coal",mw:4000,o:"Tata Power",r:50,vc:3.73,sc:0},
+  {n:"Mundra TPS (Adani)",s:"Gujarat",la:22.739,ln:69.719,f:"coal",mw:1000,o:"Adani Power",r:54,vc:4.16,sc:20998},
+  {n:"Mundra TPS II (Adani)",s:"Gujarat",la:22.739,ln:69.719,f:"coal",mw:1000,o:"Adani Power",r:58,vc:4.45,sc:4031},
+  {n:"Solapur Super TPS",s:"Gujarat",la:17.633,ln:75.9,f:"coal",mw:1320,o:"NTPC",r:63,vc:4.57,sc:344},
+  {n:"Gandhar Gas Power Station",s:"Gujarat",la:21.7,ln:73.0,f:"gas",mw:657,o:"NTPC",r:73,vc:5.88,sc:0},
+  {n:"Kawas Gas Power Station",s:"Gujarat",la:21.25,ln:72.85,f:"gas",mw:656,o:"NTPC",r:74,vc:5.91,sc:0},
+  {n:"Kawas Gas (SPOT)",s:"Gujarat",la:21.25,ln:72.85,f:"gas",mw:656,o:"NTPC",r:76,vc:6.02,sc:0},
+  {n:"Kawas Gas (HIGH SEA)",s:"Gujarat",la:21.25,ln:72.85,f:"gas",mw:656,o:"NTPC",r:82,vc:9.82,sc:0},
+  {n:"Gandhar Gas (SPOT)",s:"Gujarat",la:21.7,ln:73.0,f:"gas",mw:657,o:"NTPC",r:83,vc:10.04,sc:0},
+  {n:"Kawas Gas (RLNG)",s:"Gujarat",la:21.25,ln:72.85,f:"gas",mw:656,o:"NTPC",r:84,vc:10.10,sc:0},
+  {n:"Dhuvaran CCPP-III (HIGH SEA)",s:"Gujarat",la:22.267,ln:72.7,f:"gas",mw:376,o:"GSECL",r:88,vc:12.61,sc:0},
+  {n:"Dhuvaran CCPP-II (HIGH SEA)",s:"Gujarat",la:22.267,ln:72.7,f:"gas",mw:112,o:"GSECL",r:91,vc:14.57,sc:0},
+  {n:"Kawas Gas (RLNG SPOT)",s:"Gujarat",la:21.25,ln:72.85,f:"gas",mw:656,o:"NTPC",r:93,vc:23.80,sc:0},
+  // === KARNATAKA (20 plants with coordinates) ===
+  {n:"Sharavathi Hydroelectric",s:"Karnataka",la:14.167,ln:74.817,f:"hydro",mw:1035,o:"KPCL",r:1,vc:0.84,sc:0},
+  {n:"Linganamakki Dam",s:"Karnataka",la:14.183,ln:74.833,f:"hydro",mw:55,o:"KPCL",r:2,vc:0.84,sc:0},
+  {n:"Jog Falls Power Station",s:"Karnataka",la:14.233,ln:74.817,f:"hydro",mw:139,o:"KPCL",r:3,vc:1.05,sc:0},
+  {n:"Nagjhari Hydro Power Station",s:"Karnataka",la:14.167,ln:74.817,f:"hydro",mw:900,o:"KPCL",r:4,vc:1.40,sc:0},
+  {n:"Talcher Super TPS",s:"Karnataka",la:20.95,ln:85.233,f:"coal",mw:2000,o:"NTPC",r:9,vc:1.65,sc:0},
+  {n:"Varahi Hydro Electric",s:"Karnataka",la:13.617,ln:75.1,f:"hydro",mw:460,o:"KPCL",r:13,vc:2.11,sc:0},
+  {n:"Mani Dam Power Station",s:"Karnataka",la:14.2,ln:74.85,f:"hydro",mw:9,o:"KPCL",r:14,vc:2.11,sc:0},
+  {n:"Madras Atomic Power Station",s:"Karnataka",la:12.567,ln:80.167,f:"nuclear",mw:440,o:"NPCIL",r:16,vc:2.66,sc:0},
+  {n:"Almatti Dam Power Station",s:"Karnataka",la:16.35,ln:75.883,f:"hydro",mw:290,o:"KPCL",r:18,vc:3.32,sc:0},
+  {n:"Vallur TPS",s:"Karnataka",la:13.25,ln:80.317,f:"coal",mw:1500,o:"TANGEDCO-NTPC JV",r:20,vc:3.35,sc:0},
+  {n:"Bellary TPS",s:"Karnataka",la:15.15,ln:76.933,f:"coal",mw:700,o:"KPCL",r:21,vc:3.36,sc:0},
+  {n:"Kaiga Nuclear Unit 1-2",s:"Karnataka",la:14.85,ln:74.433,f:"nuclear",mw:440,o:"NPCIL",r:23,vc:3.57,sc:0},
+  {n:"Kaiga Nuclear Unit 3-4",s:"Karnataka",la:14.85,ln:74.433,f:"nuclear",mw:440,o:"NPCIL",r:24,vc:3.57,sc:0},
+  {n:"NLC TPS (old)",s:"Karnataka",la:11.55,ln:79.483,f:"coal",mw:1000,o:"NLC India",r:37,vc:4.11,sc:0},
+  {n:"NLC TPS (expansion)",s:"Karnataka",la:11.55,ln:79.483,f:"coal",mw:1000,o:"NLC India",r:38,vc:3.80,sc:0},
+  {n:"Raichur TPS",s:"Karnataka",la:16.233,ln:77.367,f:"coal",mw:1470,o:"KPCL",r:34,vc:4.00,sc:0},
+  {n:"Bellary TPS II",s:"Karnataka",la:15.15,ln:76.933,f:"coal",mw:500,o:"KPCL",r:35,vc:3.96,sc:0},
+  {n:"Raichur TPS (expansion)",s:"Karnataka",la:16.233,ln:77.367,f:"coal",mw:250,o:"KPCL",r:36,vc:3.79,sc:0},
+  {n:"Kudgi Super TPS",s:"Karnataka",la:16.117,ln:76.1,f:"coal",mw:2400,o:"NTPC",r:39,vc:4.54,sc:0},
+  {n:"Kudankulam Nuclear",s:"Karnataka",la:8.167,ln:77.717,f:"nuclear",mw:1000,o:"NPCIL",r:41,vc:4.76,sc:0},
+  {n:"Kudankulam Nuclear Unit 2",s:"Karnataka",la:8.167,ln:77.717,f:"nuclear",mw:1000,o:"NPCIL",r:42,vc:4.76,sc:0},
+  {n:"Bhadra Hydro Power Station",s:"Karnataka",la:13.7,ln:75.65,f:"hydro",mw:39,o:"KPCL",r:43,vc:5.59,sc:0},
+  {n:"NLC TPS II (expansion)",s:"Karnataka",la:11.55,ln:79.483,f:"coal",mw:1000,o:"NLC India",r:44,vc:3.86,sc:0},
+  {n:"NLC TPS (Stage II)",s:"Karnataka",la:11.55,ln:79.483,f:"coal",mw:1000,o:"NLC India",r:45,vc:3.86,sc:0},
+  {n:"Bellary TPS III",s:"Karnataka",la:15.15,ln:76.933,f:"coal",mw:500,o:"KPCL",r:46,vc:4.00,sc:0},
+  // === MAHARASHTRA (27 plants with coordinates) ===
+  {n:"Trombay TPS",s:"Maharashtra",la:19.0,ln:72.9,f:"coal",mw:500,o:"Tata Power",r:1,vc:0,sc:0},
+  {n:"Mundra UMPP",s:"Maharashtra",la:22.739,ln:69.719,f:"coal",mw:4000,o:"Tata Power",r:11,vc:1.60,sc:0},
+  {n:"Uran Gas Power Station",s:"Maharashtra",la:18.867,ln:72.95,f:"coal",mw:672,o:"NTPC",r:12,vc:1.61,sc:9554},
+  {n:"Tiroda TPS (Unit I-III)",s:"Maharashtra",la:21.417,ln:79.6,f:"coal",mw:1320,o:"Adani Power",r:14,vc:1.82,sc:25454},
+  {n:"Trombay Gas Unit",s:"Maharashtra",la:19.0,ln:72.9,f:"gas",mw:180,o:"Tata Power",r:15,vc:1.92,sc:1591},
+  {n:"Koradi TPS",s:"Maharashtra",la:21.233,ln:79.133,f:"coal",mw:1980,o:"MAHAGENCO",r:17,vc:2.17,sc:31660},
+  {n:"Gandhar Gas (MH alloc)",s:"Maharashtra",la:21.7,ln:73.0,f:"gas",mw:657,o:"NTPC",r:18,vc:2.17,sc:0},
+  {n:"Kawas Gas (MH alloc)",s:"Maharashtra",la:21.25,ln:72.85,f:"gas",mw:656,o:"NTPC",r:19,vc:2.20,sc:0},
+  {n:"Chandrapur Super TPS (old)",s:"Maharashtra",la:19.967,ln:79.283,f:"coal",mw:1000,o:"MAHAGENCO",r:20,vc:2.24,sc:18089},
+  {n:"Paras TPS",s:"Maharashtra",la:19.45,ln:76.667,f:"coal",mw:500,o:"MAHAGENCO",r:21,vc:2.24,sc:8121},
+  {n:"Koradi TPS (expansion)",s:"Maharashtra",la:21.233,ln:79.133,f:"coal",mw:620,o:"MAHAGENCO",r:22,vc:2.26,sc:3834},
+  {n:"Chandrapur Super TPS",s:"Maharashtra",la:19.967,ln:79.283,f:"coal",mw:1920,o:"MAHAGENCO",r:23,vc:2.31,sc:24089},
+  {n:"Tiroda TPS (Unit IV-V)",s:"Maharashtra",la:21.417,ln:79.6,f:"coal",mw:1325,o:"Adani Power",r:25,vc:2.38,sc:29907},
+  {n:"Tiroda TPS (Unit VI)",s:"Maharashtra",la:21.417,ln:79.6,f:"coal",mw:440,o:"Adani Power",r:27,vc:2.44,sc:0},
+  {n:"Kawas Gas (MH SPOT)",s:"Maharashtra",la:21.25,ln:72.85,f:"gas",mw:656,o:"NTPC",r:28,vc:2.48,sc:0},
+  {n:"Bhusawal TPS",s:"Maharashtra",la:21.045,ln:75.802,f:"coal",mw:1000,o:"MAHAGENCO",r:32,vc:2.74,sc:16813},
+  {n:"Mauda Super TPS (Unit I)",s:"Maharashtra",la:21.283,ln:79.067,f:"coal",mw:1320,o:"NTPC",r:33,vc:2.92,sc:10215},
+  {n:"Mauda Super TPS (Unit II)",s:"Maharashtra",la:21.283,ln:79.067,f:"coal",mw:1320,o:"NTPC",r:34,vc:2.96,sc:7700},
+  {n:"Bhusawal TPS (expansion)",s:"Maharashtra",la:21.045,ln:75.802,f:"coal",mw:420,o:"MAHAGENCO",r:35,vc:3.07,sc:2930},
+  {n:"Dahanu TPS",s:"Maharashtra",la:19.967,ln:72.717,f:"coal",mw:500,o:"Adani Power",r:39,vc:3.39,sc:8786},
+  {n:"Trombay TPS (Unit 8)",s:"Maharashtra",la:19.0,ln:72.9,f:"coal",mw:500,o:"Tata Power",r:42,vc:4.11,sc:6613},
+  {n:"Trombay TPS (Unit 7)",s:"Maharashtra",la:19.0,ln:72.9,f:"coal",mw:250,o:"Tata Power",r:43,vc:4.42,sc:3326},
+  {n:"Gandhar Gas (MH SPOT)",s:"Maharashtra",la:21.7,ln:73.0,f:"gas",mw:657,o:"NTPC",r:44,vc:6.39,sc:0},
+  {n:"Kawas Gas (MH RLNG)",s:"Maharashtra",la:21.25,ln:72.85,f:"gas",mw:656,o:"NTPC",r:45,vc:6.55,sc:0},
+  {n:"Kawas Gas (MH RLNG SPOT)",s:"Maharashtra",la:21.25,ln:72.85,f:"gas",mw:656,o:"NTPC",r:46,vc:8.44,sc:0},
+  {n:"Dahanu Solar",s:"Maharashtra",la:19.967,ln:72.717,f:"solar",mw:100,o:"Adani Power",r:49,vc:0,sc:0},
+  {n:"Dahanu Renewable",s:"Maharashtra",la:19.967,ln:72.717,f:"solar",mw:40,o:"Adani Power",r:50,vc:0,sc:0},
+  // === ODISHA (11 plants with coordinates) ===
+  {n:"Farakka Super TPS (Stage I-II)",s:"Odisha",la:24.817,ln:87.9,f:"coal",mw:1600,o:"NTPC",r:1,vc:0,sc:0},
+  {n:"Farakka Super TPS (Stage III)",s:"Odisha",la:24.817,ln:87.9,f:"coal",mw:500,o:"NTPC",r:2,vc:0,sc:0},
+  {n:"Talcher Super TPS",s:"Odisha",la:20.95,ln:85.233,f:"coal",mw:2000,o:"NTPC",r:9,vc:0,sc:0},
+  {n:"Talcher TPS (Stage I-II)",s:"Odisha",la:20.95,ln:85.233,f:"coal",mw:460,o:"NTPC",r:10,vc:0,sc:0},
+  {n:"Balimela Hydro",s:"Odisha",la:18.567,ln:82.05,f:"hydro",mw:510,o:"OHPC",r:13,vc:0,sc:0},
+  {n:"Rengali Hydro",s:"Odisha",la:21.283,ln:84.05,f:"hydro",mw:250,o:"OHPC",r:15,vc:0,sc:0},
+  {n:"OPGC Ib Valley (old)",s:"Odisha",la:21.833,ln:83.917,f:"coal",mw:420,o:"OPGC",r:19,vc:0,sc:0},
+  {n:"Vedanta CPP Jharsuguda",s:"Odisha",la:21.867,ln:84.017,f:"coal",mw:600,o:"Vedanta",r:20,vc:0,sc:0},
+  {n:"GMR Kamalanga",s:"Odisha",la:21.1,ln:85.4,f:"coal",mw:262,o:"GMR Group",r:21,vc:0,sc:0},
+  {n:"OPGC Ib Valley (expansion)",s:"Odisha",la:21.833,ln:83.917,f:"coal",mw:990,o:"OPGC",r:22,vc:0,sc:0},
+  {n:"OPGC Ib Valley",s:"Odisha",la:21.833,ln:83.917,f:"coal",mw:1320,o:"OPGC",r:23,vc:0,sc:0},
+  // === RAJASTHAN (11 plants with coordinates) ===
+  {n:"Pong Dam Hydro",s:"Rajasthan",la:32.033,ln:75.95,f:"hydro",mw:396,o:"BBMB",r:1,vc:0,sc:610},
+  {n:"NLC TPS (RJ alloc)",s:"Rajasthan",la:11.55,ln:79.483,f:"coal",mw:250,o:"NLC India",r:4,vc:0.86,sc:4806},
+  {n:"Giral Lignite TPS",s:"Rajasthan",la:25.917,ln:71.367,f:"coal",mw:250,o:"RVUNL",r:11,vc:1.34,sc:0},
+  {n:"Kawai TPS",s:"Rajasthan",la:25.033,ln:76.05,f:"coal",mw:1320,o:"Adani Power",r:32,vc:2.88,sc:24982},
+  {n:"Rajasthan Atomic Power Station",s:"Rajasthan",la:24.883,ln:75.583,f:"nuclear",mw:200,o:"NPCIL",r:40,vc:3.29,sc:4440},
+  {n:"Kota Super TPS",s:"Rajasthan",la:25.167,ln:75.867,f:"coal",mw:1240,o:"RVUNL",r:51,vc:4.11,sc:3765},
+  {n:"Suratgarh Super TPS",s:"Rajasthan",la:29.317,ln:73.9,f:"coal",mw:1500,o:"RVUNL",r:52,vc:4.78,sc:3352},
+  {n:"Ramgarh Gas Power Station",s:"Rajasthan",la:26.8,ln:75.033,f:"gas",mw:263,o:"RVUNL",r:54,vc:5.44,sc:2008},
+  {n:"Dholpur Gas Power Station",s:"Rajasthan",la:26.717,ln:77.9,f:"gas",mw:330,o:"RVUNL",r:55,vc:18.67,sc:0},
+  {n:"Bhakra Hydro",s:"Rajasthan",la:31.417,ln:76.433,f:"hydro",mw:1533,o:"BBMB",r:61,vc:0,sc:1903},
+  {n:"Mundra UMPP (RJ alloc)",s:"Rajasthan",la:22.739,ln:69.719,f:"coal",mw:4000,o:"Tata Power",r:63,vc:0,sc:0},
+  // === TAMIL NADU (27 plants with coordinates) ===
+  {n:"Talcher Super TPS (TN alloc)",s:"Tamil Nadu",la:20.95,ln:85.233,f:"coal",mw:2000,o:"NTPC",r:2,vc:1.48,sc:10516},
+  {n:"Talcher TPS I-II (TN alloc)",s:"Tamil Nadu",la:20.95,ln:85.233,f:"coal",mw:460,o:"NTPC",r:3,vc:1.49,sc:179},
+  {n:"GMR Kamalanga (TN alloc) Stage I",s:"Tamil Nadu",la:21.1,ln:85.4,f:"coal",mw:262,o:"GMR Group",r:6,vc:2.34,sc:1927},
+  {n:"GMR Kamalanga (TN alloc) Stage II",s:"Tamil Nadu",la:21.1,ln:85.4,f:"coal",mw:262,o:"GMR Group",r:7,vc:2.34,sc:413},
+  {n:"Madras Atomic Power Station",s:"Tamil Nadu",la:12.567,ln:80.167,f:"nuclear",mw:440,o:"NPCIL",r:8,vc:2.63,sc:3119},
+  {n:"GMR Kamalanga (TN alloc)",s:"Tamil Nadu",la:21.1,ln:85.4,f:"coal",mw:600,o:"GMR Group",r:11,vc:2.73,sc:3068},
+  {n:"Talcher Super TPS (TN Stg II)",s:"Tamil Nadu",la:20.95,ln:85.233,f:"coal",mw:1050,o:"NTPC",r:14,vc:2.79,sc:13677},
+  {n:"New Neyveli TPS",s:"Tamil Nadu",la:11.55,ln:79.483,f:"coal",mw:1000,o:"NLC India",r:16,vc:3.16,sc:9610},
+  {n:"North Chennai TPS",s:"Tamil Nadu",la:13.217,ln:80.317,f:"coal",mw:1200,o:"TANGEDCO",r:18,vc:3.16,sc:19451},
+  {n:"Vallur TPS",s:"Tamil Nadu",la:13.25,ln:80.317,f:"coal",mw:1500,o:"TANGEDCO-NTPC JV",r:19,vc:3.30,sc:20177},
+  {n:"North Chennai TPS II",s:"Tamil Nadu",la:13.217,ln:80.317,f:"coal",mw:630,o:"TANGEDCO",r:20,vc:3.41,sc:12215},
+  {n:"Farakka Super TPS (TN alloc)",s:"Tamil Nadu",la:24.817,ln:87.9,f:"coal",mw:1600,o:"NTPC",r:21,vc:3.42,sc:6690},
+  {n:"NLC TPS II (TN alloc)",s:"Tamil Nadu",la:11.55,ln:79.483,f:"coal",mw:1000,o:"NLC India",r:22,vc:3.46,sc:3298},
+  {n:"NLC TPS Expansion (TN alloc)",s:"Tamil Nadu",la:11.55,ln:79.483,f:"coal",mw:1000,o:"NLC India",r:23,vc:3.53,sc:2589},
+  {n:"Kaiga Nuclear (TN alloc)",s:"Tamil Nadu",la:14.85,ln:74.433,f:"nuclear",mw:440,o:"NPCIL",r:24,vc:3.55,sc:1154},
+  {n:"Kaiga Nuclear Unit 3-4 (TN alloc)",s:"Tamil Nadu",la:14.85,ln:74.433,f:"nuclear",mw:440,o:"NPCIL",r:25,vc:3.55,sc:2327},
+  {n:"NLC TPS (Barsingsar)",s:"Tamil Nadu",la:11.55,ln:79.483,f:"coal",mw:500,o:"NLC India",r:26,vc:3.65,sc:3314},
+  {n:"NLC TPS (Neyveli New)",s:"Tamil Nadu",la:11.55,ln:79.483,f:"coal",mw:500,o:"NLC India",r:27,vc:3.68,sc:3123},
+  {n:"Tuticorin TPS (NLC Stage I)",s:"Tamil Nadu",la:11.55,ln:79.483,f:"coal",mw:1000,o:"NLC India",r:33,vc:4.08,sc:7567},
+  {n:"Kudgi Super TPS (TN alloc)",s:"Tamil Nadu",la:16.117,ln:76.1,f:"coal",mw:2400,o:"NTPC",r:37,vc:4.39,sc:6340},
+  {n:"Kudankulam Nuclear Unit 1",s:"Tamil Nadu",la:8.167,ln:77.717,f:"nuclear",mw:1000,o:"NPCIL",r:38,vc:4.58,sc:12986},
+  {n:"Kudankulam Nuclear Unit 2",s:"Tamil Nadu",la:8.167,ln:77.717,f:"nuclear",mw:1000,o:"NPCIL",r:39,vc:4.58,sc:12321}
+];
+const MERIT_FUEL_COLORS = {coal:'#ef4444',gas:'#f59e0b',solar:'#eab308',wind:'#06b6d4',hydro:'#3b82f6',nuclear:'#a855f7',renewable:'#22c55e'};
+const MERIT_FUEL_COLORS_RGBA = {coal:[239,68,68],gas:[245,158,11],solar:[234,179,8],wind:[6,182,212],hydro:[59,130,246],nuclear:[168,85,247],renewable:[34,197,94]};
+
+const CASCADE_DATA = {
+  "day0": {
+    label: "DAY 0 (Pre-Crisis)",
+    date: "Feb 27, 2026",
+    items: [
+      "Normal operations: ~138 cargo vessels/day through Hormuz [IMF PortWatch baseline]",
+      "Brent crude at ~$69/bbl [EIA spot prices]; Indian basket at ~$63/bbl [PPAC]",
+      "JKM LNG spot at $10.70/MMBtu [EIA / ICE futures]",
+      "All refineries running at designed capacity [PPAC refinery throughput]",
+      "LPG imports flowing normally; no rationing [PPAC LPG data]",
+      "Russia accounts for ~20% of India's crude imports [PPAC monthly crude import data]"
+    ],
+    mapState: "normal"
+  },
+  "day1": {
+    label: "DAY 1 (Feb 28)",
+    date: "Feb 28, 2026",
+    items: [
+      "US + Israel launch airstrikes on Iran [PIB/MEA statements]",
+      "IRGC transmits VHF warnings: no ships permitted passage [Lloyd's List maritime alerts]",
+      "IMF PortWatch: traffic drops ~70% within hours [portwatch.imf.org]",
+      "War-risk P&I premiums surge from 0.125% to 0.2-0.4% [Lloyd's List]",
+      "Brent jumps 10-13% to $80-82/bbl [EIA spot prices]",
+      "No immediate physical shortage - refineries have 15-20 days inventory [PPAC refinery throughput]",
+      "Financial markets react: OMC stocks fall, forward contracts evaporate"
+    ],
+    mapState: "day1"
+  },
+  "day7": {
+    label: "DAY 7 (Mar 6)",
+    date: "Mar 6, 2026",
+    items: [
+      "90% of LPG imports blocked at Hormuz [PPAC LPG import data]",
+      "[Reports indicate] ~320,000 tonnes LPG stranded on 22 vessels near strait [Lloyd's List vessel tracking]",
+      "Commercial LPG allocation cut up to 80% [PIB official statement]",
+      "Essential Commodities Act invoked [PIB / Ministry of Consumer Affairs gazette notification]",
+      "[Reports indicate] Household rationing: 25-day gap (cities), 45-day (rural)",
+      "US Treasury issues 30-day waiver for Indian refiners [US Treasury OFAC notice]",
+      "Brent crosses $100/bbl, heads toward $126 peak [EIA spot prices]"
+    ],
+    mapState: "day7"
+  },
+  "day30": {
+    label: "DAY 30 (Mar 28)",
+    date: "Mar 28, 2026",
+    items: [
+      "Russia crude share surges to 45.2% (from 20.1% in Feb) [PPAC monthly crude import data]",
+      "Iraq crude imports collapse -75.2% (969K to 240K bpd) [PPAC monthly crude import data]",
+      "Saudi imports fall -43% (1.01M to 576K bpd) [PPAC monthly crude import data]",
+      "Venezuela purchases surge +329% (80K to 343K bpd) [PPAC / DGCIS trade data]",
+      "70% of crude now routed outside Hormuz (up from 55%) [derived from PPAC source-country data]",
+      "All refineries running >100% utilization [PPAC refinery throughput data]",
+      "SPR only 64% full (3.37 MMT) - ~6-9.5 days coverage [ISPRL, PIB]",
+      "Indian basket crude at $146/bbl (+133% from Jan) [PPAC Indian basket price]",
+      "Dubai crude hits all-time record $166/bbl [EIA spot prices]",
+      "IEA releases 400M barrels - largest coordinated release ever [IEA Collective Action Decision, Mar 11]"
+    ],
+    mapState: "day30"
+  },
+  "day90": {
+    label: "DAY 90 (Prolonged)",
+    date: "Projected: May 28, 2026",
+    items: [
+      "If Hormuz remains closed: permanent crude procurement restructure [PPAC route analysis]",
+      "10-15% refinery yield loss from grade mismatch (Arab Light -> Russian Urals) [PPAC refinery throughput data]",
+      "[Reports indicate] Qatar Ras Laffan 17% capacity reduction - 3-5 year repair estimate",
+      "Petronet LNG's 8.5 MMTPA Qatar contract = stranded asset [Petronet LNG annual report]",
+      "15-20% LPG deficit persists even with domestic maximization [PPAC LPG data]",
+      "Gas generation (56.4 TWh = 2.8% of total) drops 30-50% [CEA generation data, Ember]",
+      "Gujarat, Maharashtra, TN face peak hour power shortfalls [CEA, Grid-India]",
+      "Current account deficit: crude import bill projected to double [RBI monetary policy statement]",
+      "40% of fertilizer imports via Hormuz - Kharif planting at risk [Ministry of Commerce DGCIS]",
+      "GDP growth projected to drop 1-2%; inflation +2-3% [RBI / IMF World Economic Outlook]"
+    ],
+    mapState: "day90"
+  },
+  "today": {
+    label: "TODAY (Apr 2)",
+    date: "April 2, 2026",
+    items: [
+      "March total: 181 vessels transited (95.6% decline from normal 4,140) [IMF PortWatch daily transit data]",
+      "71% of March traffic was Iranian-owned or shadow fleet [Lloyd's List vessel tracking]",
+      "[Unverified diplomatic reports] Iran declares 5 'friendly nations' allowed transit: China, Russia, India, Iraq, Pakistan",
+      "[Reports indicate] IRGC formalizes toll: ~$1/barrel (yuan or crypto stablecoins)",
+      "Case-by-case clearance only - not open corridor for India [MEA statement]",
+      "28 India-linked ships stranded; 8 transited under Navy escort [MEA / PIB press releases]",
+      "Operation Urja Suraksha: Indian Navy escort operations [PIB / Ministry of Defence]",
+      "Brent at ~$101-105/bbl (down from $126 peak) [EIA spot prices]",
+      "Polymarket: 82.5% probability Hormuz stays disrupted past April [polymarket.com]"
+    ],
+    mapState: "today"
+  }
+};
+
+// ============================================================
+// SIGNAL INTELLIGENCE LAYER — S.1 (PLN-014)
+// 4 default signals: Brent Crude, Hormuz Transit, Polymarket, War Risk Premium
+// Each signal carries: current value, baseline, change, sparkline, confidence,
+// P45 commentary (Observation → Context → Commentary → Caveat), source URL,
+// and per-crisis-day history for timeline integration.
+// ============================================================
+const SIGNALS = {
+  brent: {
+    name: "BRENT CRUDE",
+    unit: "$/bbl",
+    current: 101.40,
+    baseline: 69.20,
+    change_pct: 46.5,
+    change_label: "+46.5%",
+    direction: "bad", // higher = bad for India as importer
+    sparkline: [69.2, 82.1, 98.5, 126.0, 118.3, 105.7, 101.4],
+    confidence: "H",
+    source: "EIA Petroleum Spot Prices",
+    source_url: "https://www.eia.gov/dnav/pet/pet_pri_spt_s1_d.htm",
+    updated: "2026-04-01",
+    formatValue: v => "$" + v.toFixed(2),
+    history: {
+      day0:  { value: 69.20,  note: "Pre-crisis baseline" },
+      day1:  { value: 82.10,  note: "Op Epic Fury — immediate spike" },
+      day7:  { value: 110.50, note: "Sustained rise, P&I cancellation" },
+      day30: { value: 126.00, note: "Peak — supply fears maximum" },
+      day90: { value: 105.00, note: "Projected — partial adaptation" },
+      today: { value: 101.40, note: "Stabilizing — rerouting absorbing demand" }
+    },
+    p45: {
+      title: "BRENT CRUDE — PRICE SIGNAL",
+      current_label: "$101.40/bbl (Apr 1, 2026)",
+      baseline_label: "$69.20/bbl (Feb 27, pre-crisis)",
+      change_detail: "+$32.20 (+46.5%)",
+      peak: "$126.00 (Mar 8)",
+      observation: "Brent crude surged from $69 to $126 in 8 days following Operation Epic Fury. Currently stabilizing around $101 as Russian crude rerouting absorbs some demand.",
+      observation_conf: "H",
+      context: "Brent is the global benchmark. The $126 peak was the highest since 2022. The spread between Brent and Indian basket crude hit $50+ indicating India-specific supply stress.",
+      commentary: "The stabilization around $101 suggests markets are pricing in a prolonged disruption (not a quick resolution) with partial adaptation via alternative routes.",
+      commentary_conf: "M",
+      caveat: "We are not oil traders. Price forecasting is outside our competence. This is observational data from EIA, not analysis."
+    }
+  },
+  hormuz: {
+    name: "HORMUZ TRANSIT",
+    unit: "transits/mo",
+    current: 181,
+    baseline: 4140,
+    change_pct: -95.6,
+    change_label: "-95.6%",
+    direction: "bad", // lower = bad
+    sparkline: [4140, 4100, 2100, 500, 200, 181, 190],
+    confidence: "H",
+    source: "IMF PortWatch",
+    source_url: "https://portwatch.imf.org/pages/chokepoint6",
+    updated: "2026-04-01",
+    formatValue: v => v.toLocaleString(),
+    history: {
+      day0:  { value: 4140, note: "Normal operations (~138/day)" },
+      day1:  { value: 2900, note: "Traffic drops ~70% within hours" },
+      day7:  { value: 500,  note: "~90% collapsed" },
+      day30: { value: 181,  note: "95.6% collapsed — 181 ships in March" },
+      day90: { value: 200,  note: "Projected — minimal recovery" },
+      today: { value: 181,  note: "95.6% decline from normal 4,140" }
+    },
+    p45: {
+      title: "HORMUZ TRANSIT — PHYSICAL SIGNAL",
+      current_label: "~181 transits/month (Apr 1, 2026)",
+      baseline_label: "~4,140 transits/month (Feb 27, normal)",
+      change_detail: "-3,959 transits (-95.6%)",
+      peak: "4,140/month (pre-crisis normal)",
+      observation: "IMF PortWatch recorded 181 vessel transits through Hormuz in March 2026, down 95.6% from the ~4,140 monthly average. 71% of remaining traffic was Iranian-owned or shadow fleet.",
+      observation_conf: "H",
+      context: "Hormuz carries 20.9 mb/d of crude and condensate — roughly 20% of global supply. India receives 45% of its crude, 60% of its LNG, and 90% of its LPG through this chokepoint.",
+      commentary: "The near-complete shutdown means India has effectively lost direct access to its largest single supply corridor. The 181 remaining transits are almost entirely non-commercial vessels.",
+      commentary_conf: "H",
+      caveat: "IMF PortWatch updates weekly (Tuesdays, 9 AM ET). Daily counts may vary from our monthly aggregation. Ship-type classification relies on AIS data which can be spoofed."
+    }
+  },
+  polymarket: {
+    name: "POLYMARKET",
+    unit: "% norm. by Apr 30",
+    current: 17.5,
+    baseline: 50,
+    change_pct: -65,
+    change_label: "17.5%",
+    direction: "bad", // lower normalization chance = bad
+    sparkline: [50, 42, 35, 28, 20, 17.5, 17.5],
+    confidence: "H",
+    source: "Polymarket",
+    source_url: "https://polymarket.com/event/strait-of-hormuz-traffic-returns-to-normal-by-april-30",
+    updated: "2026-04-01",
+    formatValue: v => v.toFixed(1) + "%",
+    history: {
+      day0:  { value: 50.0, note: "No active contract pre-crisis" },
+      day1:  { value: 42.0, note: "Market opens — skeptical but uncertain" },
+      day7:  { value: 28.0, note: "Odds dropping as crisis deepens" },
+      day30: { value: 17.5, note: "Market prices prolonged disruption" },
+      day90: { value: 10.0, note: "Projected — very low normalization odds" },
+      today: { value: 17.5, note: "82.5% chance Hormuz stays disrupted past April" }
+    },
+    p45: {
+      title: "POLYMARKET — SENTIMENT SIGNAL",
+      current_label: "17.5% chance of normalization by Apr 30",
+      baseline_label: "~50% (early March, when contract opened)",
+      change_detail: "From ~50% to 17.5% (was ~40% in early March)",
+      peak: "50% (contract opening)",
+      observation: "Polymarket's 'Strait of Hormuz traffic returns to normal by April 30' contract trades at 17.5%, meaning the crowd assigns an 82.5% probability that the disruption continues past April.",
+      observation_conf: "H",
+      context: "Prediction markets aggregate dispersed information. Polymarket's Hormuz contract draws from traders with shipping, military, and diplomatic domain knowledge. The price IS the consensus forecast.",
+      commentary: "The steady decline from ~50% to 17.5% tracks the failure of diplomatic channels and the formalization of Iran's 'friendly nations' transit policy. The market sees no near-term resolution.",
+      commentary_conf: "H",
+      caveat: "Prediction markets can be illiquid and manipulated. Polymarket volume on this contract should be checked — low-volume markets are noisy. This is crowd sentiment, not a forecast."
+    }
+  },
+  war_risk: {
+    name: "WAR RISK",
+    unit: "% hull value",
+    current: 2.75,
+    baseline: 0.125,
+    change_pct: 2100,
+    change_label: "+2,100%",
+    direction: "bad", // higher = bad
+    sparkline: [0.125, 0.5, 1.0, 2.0, 3.0, 2.8, 2.5],
+    confidence: "M",
+    source: "Lloyd's List / JWC",
+    source_url: "https://www.lloydslist.com/",
+    updated: "2026-04-01",
+    formatValue: v => v.toFixed(2) + "%",
+    history: {
+      day0:  { value: 0.125, note: "Standard peacetime premium" },
+      day1:  { value: 0.40,  note: "Immediate repricing — first signal to move" },
+      day7:  { value: 1.50,  note: "JWC extends Listed Area, premiums surge" },
+      day30: { value: 3.00,  note: "Peak — P&I cancellation compounds risk" },
+      day90: { value: 2.50,  note: "Projected — slightly lower but elevated" },
+      today: { value: 2.75,  note: "2.5-3.0% range — 20x peacetime" }
+    },
+    p45: {
+      title: "WAR RISK PREMIUM — RISK SIGNAL",
+      current_label: "2.5-3.0% of hull value (Apr 1, 2026)",
+      baseline_label: "0.125% (Feb 27, pre-crisis)",
+      change_detail: "+2.375-2.875pp (~2,000-2,300%)",
+      peak: "~3.0% (Mar 8-12)",
+      observation: "Additional War Risk Premium (AWRP) for Persian Gulf / Strait of Hormuz transits surged from the standard 0.125% to 2.5-3.0% of hull value — a 20x increase. This was the FIRST signal to move, within hours of Operation Epic Fury.",
+      observation_conf: "M",
+      context: "AWRP is charged per-transit by P&I clubs (marine insurers). A VLCC hull valued at $100M now pays $2.5-3.0M per transit just for war risk insurance — on top of normal H&M and P&I coverage. This cost is passed through to charterers and ultimately to oil importers.",
+      commentary: "Insurance was the canary in the coal mine. Lloyd's underwriters repriced within hours because war risk is a binary assessment — military strikes occurred, and the actuarial tables have well-defined premiums for active conflict zones. This signal moved before price, before shipping analytics, before prediction markets.",
+      commentary_conf: "M",
+      caveat: "We do not have real-time AWRP data. Values are from Lloyd's List reports and broker communications with 1-3 day delay. The reported values may not reflect the actual premium charged to Indian-flagged vessels specifically."
+    }
+  }
+};
+
+// Signal rendering helpers
+function renderSignalCards() {
+  const container = document.getElementById('signal-bar');
+  if (!container) return;
+  container.innerHTML = '';
+  const signalOrder = ['brent', 'hormuz', 'polymarket', 'war_risk'];
+  signalOrder.forEach(key => {
+    const s = SIGNALS[key];
+    const dayData = s.history[selectedCascadeDay];
+    const displayValue = dayData ? dayData.value : s.current;
+    const displayBaseline = s.baseline;
+    const changePct = displayBaseline !== 0 ? ((displayValue - displayBaseline) / displayBaseline * 100) : 0;
+    const changeLabel = (changePct >= 0 ? "+" : "") + changePct.toFixed(1) + "%";
+    // Sparkline: compute bar heights as pct of max in series
+    const maxVal = Math.max(...s.sparkline);
+    const sparkBars = s.sparkline.map(v => {
+      const h = maxVal > 0 ? (v / maxVal * 100) : 0;
+      return h;
+    });
+    // Bar color: red if direction is "bad" (all 4 are bad for India)
+    const barColor = s.direction === 'bad' ? 'var(--alert)' : 'var(--green)';
+    // Change text color
+    const changeClass = s.direction === 'bad' ? 'bad' : 'good';
+    // Confidence dot
+    const confClass = s.confidence === 'H' ? 'high' : 'medium';
+
+    const card = document.createElement('div');
+    card.className = 'signal-card';
+    card.onclick = () => showSignalDetail(key);
+    card.innerHTML = `
+      <div class="signal-card-header">
+        <span class="signal-card-name">${s.name}</span>
+        <span class="signal-confidence"><span class="conf-dot ${confClass}"></span>${s.confidence}</span>
+      </div>
+      <div class="signal-card-value-row">
+        <span class="signal-card-value">${s.formatValue(displayValue)}</span>
+        <span class="signal-card-change ${changeClass}">${changePct >= 0 ? '\u25B2' : '\u25BC'}${changeLabel}</span>
+      </div>
+      <div class="sparkline">
+        ${sparkBars.map(h => `<div class="spark-bar" style="height:${Math.max(2, h)}%;background:${barColor}"></div>`).join('')}
+      </div>
+      <div class="signal-card-source">${s.source} \u00B7 ${s.updated}</div>
+    `;
+    container.appendChild(card);
+  });
+}
+
+function showSignalDetail(key) {
+  const s = SIGNALS[key];
+  const p = s.p45;
+
+  // Build sparkline for the expanded view using the same data
+  const maxVal = Math.max(...s.sparkline);
+  const barColor = s.direction === 'bad' ? 'var(--alert)' : 'var(--green)';
+  const sparkBarsHTML = s.sparkline.map(v => {
+    const h = maxVal > 0 ? (v / maxVal * 100) : 0;
+    return `<div class="spark-bar" style="height:${Math.max(2, h)}%;background:${barColor};width:8px"></div>`;
+  }).join('');
+
+  // Build history table for timeline values
+  const dayOrder = ['day0', 'day1', 'day7', 'day30', 'day90', 'today'];
+  const dayLabels = { day0: 'Pre-Crisis', day1: 'Day 1', day7: 'Day 7', day30: 'Day 30', day90: 'Day 90', today: 'Today' };
+  const historyHTML = dayOrder.map(d => {
+    const h = s.history[d];
+    if (!h) return '';
+    const isCurrent = (d === selectedCascadeDay);
+    return `<div class="stat-row" style="${isCurrent ? 'background:rgba(255,255,255,0.04);' : ''}">
+      <span class="stat-label">${dayLabels[d]}</span>
+      <span class="stat-value" style="${isCurrent ? 'color:var(--oil);font-weight:700' : ''}">${s.formatValue(h.value)}</span>
+    </div>`;
+  }).join('');
+
+  const confDotClass = s.confidence === 'H' ? 'high' : 'medium';
+
+  showEntityPanel(`
+    <button class="back-btn" onclick="clearSelection(); renderSignalCards();">&#8592; Back to summary</button>
+    <div class="detail-section">
+      <div class="detail-title">${p.title}</div>
+      <div class="detail-divider" style="background:linear-gradient(90deg, var(--alert), var(--border))"></div>
+    </div>
+
+    <div class="detail-section">
+      <div class="stat-row"><span class="stat-label">CURRENT</span><span class="stat-value alert">${p.current_label}</span></div>
+      <div class="stat-row"><span class="stat-label">BASELINE</span><span class="stat-value">${p.baseline_label}</span></div>
+      <div class="stat-row"><span class="stat-label">CHANGE</span><span class="stat-value alert">${p.change_detail}</span></div>
+      <div class="stat-row"><span class="stat-label">PEAK</span><span class="stat-value oil">${p.peak}</span></div>
+    </div>
+
+    <div class="detail-section">
+      <div style="display:flex;align-items:flex-end;gap:3px;height:40px;margin-bottom:8px">
+        ${sparkBarsHTML}
+      </div>
+    </div>
+
+    <div class="detail-section">
+      <div class="detail-title" style="font-size:11px; color:var(--text-muted)">OBSERVATION <span class="signal-confidence" style="display:inline-flex;vertical-align:middle"><span class="conf-dot ${confDotClass}" style="width:6px;height:6px;border-radius:50%;display:inline-block"></span> ${p.observation_conf}</span></div>
+      <div style="font-family:var(--font-data);font-size:11px;color:var(--text-secondary);line-height:1.7">${p.observation}</div>
+    </div>
+
+    <div class="detail-section">
+      <div class="detail-title" style="font-size:11px; color:var(--text-muted)">CONTEXT</div>
+      <div style="font-family:var(--font-data);font-size:11px;color:var(--text-secondary);line-height:1.7">${p.context}</div>
+    </div>
+
+    <div class="detail-section">
+      <div class="detail-title" style="font-size:11px; color:var(--text-muted)">COMMENTARY <span class="signal-confidence" style="display:inline-flex;vertical-align:middle"><span class="conf-dot ${s.confidence === 'H' ? confDotClass : 'medium'}" style="width:6px;height:6px;border-radius:50%;display:inline-block"></span> ${p.commentary_conf}</span></div>
+      <div style="font-family:var(--font-data);font-size:11px;color:var(--text-secondary);line-height:1.7">${p.commentary}</div>
+    </div>
+
+    <div class="detail-section" style="background:rgba(255,179,71,0.05);border-radius:4px;padding:10px;border-left:3px solid var(--oil)">
+      <div class="detail-title" style="font-size:11px; color:var(--oil)">CAVEAT</div>
+      <div style="font-family:var(--font-data);font-size:11px;color:var(--text-secondary);line-height:1.7;font-style:italic">${p.caveat}</div>
+    </div>
+
+    <div class="detail-section">
+      <div class="detail-title" style="font-size:11px; color:var(--text-muted)">TIMELINE VALUES</div>
+      ${historyHTML}
+    </div>
+
+    <a class="source-link" href="${s.source_url}" target="_blank">Source: ${s.source}</a>
+  `);
+}
+
+// ============================================================
+// COLOR HELPERS
+// ============================================================
+const COMMODITY_COLORS = { oil: [255,179,71], coal: [160,160,160], lng: [79,195,247] };
+function hormuzColor(pct) {
+  if (pct > 70) return [239,68,68];
+  if (pct > 40) return [245,158,11];
+  return [34,197,94];
+}
+function hormuzColorHex(pct) {
+  if (pct > 70) return '#ef4444';
+  if (pct > 40) return '#f59e0b';
+  return '#22c55e';
+}
+function vulnColor(v) {
+  const m = { 'EXTREME':[220,38,38,140],'HIGH':[239,68,68,100],'MODERATE-HIGH':[245,158,11,90],'MODERATE':[251,191,36,70],'LOW-MODERATE':[250,204,21,50],'LOW':[74,222,128,40],'MINIMAL':[34,197,94,30] };
+  return m[v] || [100,100,100,30];
+}
+function vulnBadgeClass(v) {
+  return 'vuln-' + v.toLowerCase().replace(/\s+/g,'-');
+}
+const FUEL_COLORS = { coal:[160,160,160], gas:[79,195,247], solar:[250,204,21], wind:[34,197,94], nuclear:[168,85,247], hydro:[56,189,248] };
+const FUEL_COLORS_HEX = { coal:'#a0a0a0', gas:'#4FC3F7', solar:'#facc15', wind:'#22c55e', nuclear:'#a855f7', hydro:'#38bdf8' };
+
+// ============================================================
+// STATE
+// ============================================================
+let layerVisibility = { 'routes-oil': true, 'routes-coal': true, 'routes-lng': true, refineries: true, plants: false, vulnerability: true };
+let currentTime = 'apr';
+let selectedCascadeDay = 'today';
+let selectedEntity = null;
+window.crisisIntensity = 0.85; // default: today's crisis level
+let mapInstance = null;
+let deckgl = null;
+let currentZoom = 3.5;
+let stateGeoJson = null; // loaded async from CDN
+let arcAnimTime = 0;
+let animationRunning = false;
+
+// ============================================================
+// INIT
+// ============================================================
+window.addEventListener('DOMContentLoaded', () => {
+  initMap();
+  renderDefaultDetail();
+  renderSignalCards();
+  fetchStateGeoJson();
+});
+
+// State vulnerability color mapping for choropleth
+function getStateVulnColor(stateName) {
+  if (!stateName) return [100,100,100,10];
+  const sn = stateName.trim();
+  const snUpper = sn.toUpperCase();
+  // EXTREME — Gujarat
+  if (snUpper === 'GUJARAT') return [220,38,38,90];
+  // HIGH — Maharashtra, Kerala, Karnataka, Tamil Nadu
+  if (['MAHARASHTRA','KERALA','KARNATAKA','TAMIL NADU'].includes(snUpper)) return [239,68,68,65];
+  // MODERATE — Rajasthan, Haryana, Uttar Pradesh, Punjab, Andhra Pradesh
+  if (['RAJASTHAN','HARYANA','UTTAR PRADESH','PUNJAB','ANDHRA PRADESH','NCT OF DELHI'].includes(snUpper)) return [249,115,22,50];
+  // LOW — West Bengal, Odisha, Bihar, Jharkhand, Telangana, Madhya Pradesh
+  if (['WEST BENGAL','ODISHA','ORISSA','BIHAR','JHARKHAND','TELANGANA','MADHYA PRADESH'].includes(snUpper)) return [234,179,8,38];
+  // MINIMAL — Chhattisgarh, Himachal Pradesh, Uttarakhand, Assam, Goa, etc
+  if (['CHHATTISGARH','HIMACHAL PRADESH','UTTARAKHAND','UTTARANCHAL','ASSAM','GOA','MEGHALAYA','MANIPUR','MIZORAM','NAGALAND','TRIPURA','SIKKIM','ARUNACHAL PRADESH','JAMMU & KASHMIR','JAMMU AND KASHMIR','LADAKH','PUDUCHERRY','CHANDIGARH','DADRA AND NAGAR HAVELI AND DAMAN AND DIU','ANDAMAN AND NICOBAR ISLANDS','LAKSHADWEEP'].includes(snUpper)) return [34,197,94,25];
+  return [100,100,100,10]; // unknown states / UTs
+}
+
+function handleStateClick(stateName) {
+  if (!stateName) return;
+  const sn = stateName.trim();
+  const match = STATES.find(s => s.name.toUpperCase() === sn.toUpperCase());
+  if (match) {
+    selectedEntity = { data: match, type: 'states' };
+    renderStateDetail(match);
+  }
+}
+
+function fetchStateGeoJson() {
+  // Uses udit-001/india-maps-data — verified correct Indian boundaries:
+  // Full J&K + Ladakh (post-2019), POK + Aksai Chin within India, LoC NOT shown as international border
+  const urls = [
+    'https://cdn.jsdelivr.net/gh/udit-001/india-maps-data@main/geojson/india.geojson',
+    'https://raw.githubusercontent.com/udit-001/india-maps-data/main/geojson/india.geojson'
+  ];
+  tryFetchGeoJson(urls, 0);
+}
+
+function tryFetchGeoJson(urls, idx) {
+  if (idx >= urls.length) {
+    console.warn('GeoJSON fetch failed from all sources; falling back to scatter points');
+    return;
+  }
+  fetch(urls[idx])
+    .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
+    .then(data => {
+      stateGeoJson = data;
+      console.log('GeoJSON loaded:', data.features ? data.features.length + ' features' : 'unknown');
+      updateLayers();
+    })
+    .catch(err => {
+      console.warn('GeoJSON source ' + idx + ' failed:', err.message);
+      tryFetchGeoJson(urls, idx + 1);
+    });
+}
+
+// Arc animation loop — throttled to 30fps with visibility-change pause
+let lastFrameTime = 0;
+let animFrameId = null;
+
+function startArcAnimation() {
+  if (animationRunning) return;
+  animationRunning = true;
+  lastFrameTime = 0;
+  function animate(timestamp) {
+    if (!animationRunning) return;
+    animFrameId = requestAnimationFrame(animate);
+    if (timestamp - lastFrameTime < 33) return; // 30fps cap
+    lastFrameTime = timestamp;
+    arcAnimTime += 0.005;
+    // Only rebuild arc layers (the only thing that changes per-frame)
+    // instead of calling the full updateLayers() every frame
+    if (deckgl) {
+      updateLayers();
+    }
+  }
+  animFrameId = requestAnimationFrame(animate);
+}
+
+function stopArcAnimation() {
+  animationRunning = false;
+  if (animFrameId) {
+    cancelAnimationFrame(animFrameId);
+    animFrameId = null;
+  }
+}
+
+// Pause animation when tab is hidden, resume when visible
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    stopArcAnimation();
+  } else {
+    startArcAnimation();
+  }
+});
+
+function initMap() {
+  mapInstance = new maplibregl.Map({
+    container: 'map-container',
+    style: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
+    center: [68, 15],
+    zoom: 3.5,
+    minZoom: 2,
+    maxZoom: 10,
+    attributionControl: false
+  });
+
+  mapInstance.on('load', () => {
+    deckgl = new deck.DeckGL({
+      container: 'map-panel',
+      mapStyle: null,
+      initialViewState: { longitude: 68, latitude: 15, zoom: 3.5, pitch: 0, bearing: 0 },
+      controller: true,
+      onViewStateChange: ({viewState}) => {
+        currentZoom = viewState.zoom;
+        mapInstance.jumpTo({ center: [viewState.longitude, viewState.latitude], zoom: viewState.zoom, bearing: viewState.bearing, pitch: viewState.pitch });
+        updateLayers();
+      },
+      getTooltip: ({object}) => null,
+      onClick: (info) => {
+        if (info.object) {
+          handleEntityClick(info.object, info.layer.id);
+        } else {
+          clearSelection();
+        }
+      },
+      onHover: (info) => {
+        const tooltip = document.getElementById('map-tooltip');
+        if (info.object && info.layer) {
+          tooltip.style.display = 'block';
+          tooltip.style.left = (info.x + 12) + 'px';
+          tooltip.style.top = (info.y + 12) + 'px';
+          tooltip.innerHTML = getTooltipHTML(info.object, info.layer.id);
+        } else {
+          tooltip.style.display = 'none';
+        }
+      },
+      layers: []
+    });
+    updateLayers();
+    startArcAnimation();
+  });
+}
+
+function getTooltipHTML(obj, layerId) {
+  if (layerId === 'arc-oil' || layerId === 'arc-coal' || layerId === 'arc-lng') {
+    return `<div class="tt-title">${obj.from.name} &#8594; ${obj.to.name}</div>
+      <div class="tt-row"><span class="tt-label">Volume</span><span class="tt-value">${obj.volume_mtpa} MMTPA${obj.volume_mbd ? ' ('+obj.volume_mbd+' mb/d)' : ''}</span></div>
+      <div class="tt-row"><span class="tt-label">Transit</span><span class="tt-value">${obj.transit_days} days</span></div>
+      <div class="tt-row"><span class="tt-label">Chokepoints</span><span class="tt-value">${obj.chokepoints.length ? obj.chokepoints.join(', ') : 'None'}</span></div>`;
+  }
+  if (layerId === 'refineries') {
+    return `<div class="tt-title">${obj.name}</div>
+      <div class="tt-row"><span class="tt-label">Owner</span><span class="tt-value">${obj.owner}</span></div>
+      <div class="tt-row"><span class="tt-label">Capacity</span><span class="tt-value">${obj.capacity} MMTPA</span></div>
+      <div class="tt-row"><span class="tt-label">Hormuz</span><span class="tt-value" style="color:${hormuzColorHex(obj.hormuz)}">${obj.hormuz}%</span></div>
+      <div style="color:#94a3b8;margin-top:4px;font-size:10px">Click for detail</div>`;
+  }
+  if (layerId === 'states') {
+    return `<div class="tt-title">${obj.name}</div>
+      <div class="tt-row"><span class="tt-label">Vulnerability</span><span class="tt-value">${obj.vulnerability}</span></div>
+      <div class="tt-row"><span class="tt-label">Refining</span><span class="tt-value">${obj.refining_mmtpa} MMTPA</span></div>
+      <div style="color:#94a3b8;margin-top:4px;font-size:10px">Click for detail</div>`;
+  }
+  if (layerId === 'chokepoints') {
+    return `<div class="tt-title">${obj.name}</div>
+      <div class="tt-row"><span class="tt-label">Global flow</span><span class="tt-value">${obj.flow_mbd} mb/d</span></div>
+      <div class="tt-row"><span class="tt-label">India exposure</span><span class="tt-value">${obj.india_pct}%</span></div>
+      <div class="tt-row"><span class="tt-label">Status</span><span class="tt-value" style="color:${obj.status==='disrupted'?'#ef4444':obj.status==='normal'?'#22c55e':'#f59e0b'}">${obj.status.toUpperCase()}</span></div>`;
+  }
+  if (layerId === 'ports') {
+    return `<div class="tt-title">${obj.name}</div>
+      <div class="tt-row"><span class="tt-label">Operator</span><span class="tt-value">${obj.operator}</span></div>
+      <div class="tt-row"><span class="tt-label">Capacity</span><span class="tt-value">${obj.capacity} MMTPA</span></div>`;
+  }
+  if (layerId === 'plants') {
+    const fuelLabel = obj.f.charAt(0).toUpperCase() + obj.f.slice(1);
+    const fColor = MERIT_FUEL_COLORS[obj.f] || '#999';
+    return `<div class="tt-title">${obj.n}</div>
+      <div class="tt-row"><span class="tt-label">Owner</span><span class="tt-value">${obj.o}</span></div>
+      <div class="tt-row"><span class="tt-label">Type</span><span class="tt-value" style="color:${fColor}">${fuelLabel}</span></div>
+      <div class="tt-row"><span class="tt-label">Capacity</span><span class="tt-value">${obj.mw.toLocaleString()} MW</span></div>
+      <div class="tt-row"><span class="tt-label">Merit Rank</span><span class="tt-value">#${obj.r} (${obj.s})</span></div>
+      ${obj.vc ? '<div class="tt-row"><span class="tt-label">Var. Cost</span><span class="tt-value">\u20B9'+obj.vc.toFixed(2)+'/kWh</span></div>' : ''}
+      <div style="color:#94a3b8;margin-top:4px;font-size:10px">Click for detail</div>`;
+  }
+  return '';
+}
+
+// ============================================================
+// LAYER RENDERING
+// ============================================================
+function updateLayers() {
+  if (!deckgl) return;
+  const layers = [];
+  const crisisLevel = window.crisisIntensity || 0;
+  const hormuzDimFactor = 1.0 - (crisisLevel * 0.85); // 1.0 at day0, 0.15 at day90
+
+  // STATE CHOROPLETH — GeoJSON vulnerability overlay
+  if (layerVisibility['vulnerability'] && stateGeoJson) {
+    layers.push(new deck.GeoJsonLayer({
+      id: 'state-choropleth',
+      data: stateGeoJson,
+      filled: true,
+      stroked: true,
+      getFillColor: feature => getStateVulnColor(feature.properties.stname || feature.properties.NAME_1 || feature.properties.ST_NM || feature.properties.name),
+      getLineColor: [255,255,255,30],
+      getLineWidth: 1,
+      lineWidthMinPixels: 0.5,
+      pickable: true,
+      autoHighlight: true,
+      highlightColor: [255,255,255,30],
+      onClick: ({object}) => {
+        if (object) handleStateClick(object.properties.stname || object.properties.NAME_1 || object.properties.ST_NM || object.properties.name);
+      },
+      onHover: (info) => {
+        if (info.object) {
+          const tooltip = document.getElementById('map-tooltip');
+          const sn = info.object.properties.stname || info.object.properties.NAME_1 || info.object.properties.ST_NM || info.object.properties.name || '';
+          const match = STATES.find(s => s.name.toUpperCase() === sn.toUpperCase().trim());
+          if (match) {
+            tooltip.style.display = 'block';
+            tooltip.style.left = (info.x + 12) + 'px';
+            tooltip.style.top = (info.y + 12) + 'px';
+            tooltip.innerHTML = `<div class="tt-title">${match.name}</div>
+              <div class="tt-row"><span class="tt-label">Vulnerability</span><span class="tt-value">${match.vulnerability}</span></div>
+              <div class="tt-row"><span class="tt-label">Refining</span><span class="tt-value">${match.refining_mmtpa} MMTPA</span></div>
+              <div style="color:#94a3b8;margin-top:4px;font-size:10px">Click for detail</div>`;
+          }
+        }
+      },
+      updateTriggers: { getFillColor: [layerVisibility['vulnerability']] }
+    }));
+  } else if (layerVisibility['vulnerability'] && !stateGeoJson) {
+    // GeoJSON fallback: render STATES as colored centroid circles
+    layers.push(new deck.ScatterplotLayer({
+      id: 'state-vulnerability-fallback',
+      data: STATES,
+      getPosition: d => [d.lng, d.lat],
+      getRadius: 50000,
+      getFillColor: d => getStateVulnColor(d.name),
+      getLineColor: [255,255,255,40],
+      lineWidthMinPixels: 1,
+      stroked: true,
+      opacity: 0.4,
+      pickable: true,
+      autoHighlight: true,
+      highlightColor: [255,255,255,60],
+      radiusMinPixels: 12,
+      radiusMaxPixels: 50,
+      onClick: ({object}) => {
+        if (object) handleStateClick(object.name);
+      },
+      onHover: (info) => {
+        if (info.object) {
+          const tooltip = document.getElementById('map-tooltip');
+          const match = info.object;
+          tooltip.style.display = 'block';
+          tooltip.style.left = (info.x + 12) + 'px';
+          tooltip.style.top = (info.y + 12) + 'px';
+          tooltip.innerHTML = `<div class="tt-title">${match.name}</div>
+            <div class="tt-row"><span class="tt-label">Vulnerability</span><span class="tt-value">${match.vulnerability}</span></div>
+            <div class="tt-row"><span class="tt-label">Refining</span><span class="tt-value">${match.refining_mmtpa} MMTPA</span></div>
+            <div style="color:#94a3b8;margin-top:4px;font-size:10px">Click for detail</div>`;
+        }
+      }
+    }));
+  }
+
+  // ARC LAYERS — Trade routes with animated pulse
+  const t = arcAnimTime;
+  if (layerVisibility['routes-oil']) {
+    const oilRoutes = ROUTES.filter(r => r.commodity === 'oil');
+    layers.push(new deck.ArcLayer({
+      id: 'arc-oil',
+      data: oilRoutes,
+      getSourcePosition: d => [d.from.lng, d.from.lat],
+      getTargetPosition: d => [d.to.lng, d.to.lat],
+      getSourceColor: (d, {index}) => {
+        const pulse = 0.7 + 0.3 * Math.sin(t * 2 + index * 0.5);
+        const alpha = d.chokepoints.includes('hormuz') ? Math.floor(255 * hormuzDimFactor * pulse) : Math.floor(220 * pulse);
+        return [255,179,71, Math.max(40, alpha)];
+      },
+      getTargetColor: (d, {index}) => {
+        const pulse = 0.7 + 0.3 * Math.sin(t * 2 + index * 0.5 + 1.5);
+        const alpha = d.chokepoints.includes('hormuz') ? Math.floor(180 * hormuzDimFactor * pulse) : Math.floor(180 * pulse);
+        return [255,179,71, Math.max(30, alpha)];
+      },
+      getWidth: d => Math.max(1, Math.sqrt(d.volume_mtpa) * 0.8),
+      getHeight: 0.3,
+      greatCircle: true,
+      pickable: true,
+      autoHighlight: true,
+      highlightColor: [255,255,255,60],
+      updateTriggers: { getSourceColor: [t], getTargetColor: [t] }
+    }));
+  }
+  if (layerVisibility['routes-coal']) {
+    const coalRoutes = ROUTES.filter(r => r.commodity === 'coal');
+    layers.push(new deck.ArcLayer({
+      id: 'arc-coal',
+      data: coalRoutes,
+      getSourcePosition: d => [d.from.lng, d.from.lat],
+      getTargetPosition: d => [d.to.lng, d.to.lat],
+      getSourceColor: (d, {index}) => {
+        const pulse = 0.7 + 0.3 * Math.sin(t * 2 + index * 0.6);
+        return [160,160,160, Math.floor(200 * pulse)];
+      },
+      getTargetColor: (d, {index}) => {
+        const pulse = 0.7 + 0.3 * Math.sin(t * 2 + index * 0.6 + 1.5);
+        return [160,160,160, Math.floor(140 * pulse)];
+      },
+      getWidth: d => Math.max(1, Math.sqrt(d.volume_mtpa) * 0.6),
+      getHeight: 0.3,
+      greatCircle: true,
+      pickable: true,
+      autoHighlight: true,
+      highlightColor: [255,255,255,60],
+      updateTriggers: { getSourceColor: [t], getTargetColor: [t] }
+    }));
+  }
+  if (layerVisibility['routes-lng']) {
+    const lngRoutes = ROUTES.filter(r => r.commodity === 'lng');
+    layers.push(new deck.ArcLayer({
+      id: 'arc-lng',
+      data: lngRoutes,
+      getSourcePosition: d => [d.from.lng, d.from.lat],
+      getTargetPosition: d => [d.to.lng, d.to.lat],
+      getSourceColor: (d, {index}) => {
+        const pulse = 0.7 + 0.3 * Math.sin(t * 2 + index * 0.4);
+        const alpha = d.chokepoints.includes('hormuz') ? Math.floor(255 * hormuzDimFactor * pulse) : Math.floor(220 * pulse);
+        return [79,195,247, Math.max(40, alpha)];
+      },
+      getTargetColor: (d, {index}) => {
+        const pulse = 0.7 + 0.3 * Math.sin(t * 2 + index * 0.4 + 1.5);
+        const alpha = d.chokepoints.includes('hormuz') ? Math.floor(180 * hormuzDimFactor * pulse) : Math.floor(180 * pulse);
+        return [79,195,247, Math.max(30, alpha)];
+      },
+      getWidth: d => Math.max(1, Math.sqrt(d.volume_mtpa) * 1.2),
+      getHeight: 0.3,
+      greatCircle: true,
+      pickable: true,
+      autoHighlight: true,
+      highlightColor: [255,255,255,60],
+      updateTriggers: { getSourceColor: [t], getTargetColor: [t] }
+    }));
+  }
+
+  // REFINERIES
+  if (layerVisibility['refineries']) {
+    layers.push(new deck.ScatterplotLayer({
+      id: 'refineries',
+      data: REFINERIES,
+      getPosition: d => [d.lng, d.lat],
+      getRadius: d => Math.max(8000, Math.sqrt(d.capacity) * 6000),
+      getFillColor: d => [...hormuzColor(d.hormuz), 200],
+      getLineColor: [255,255,255,80],
+      lineWidthMinPixels: 1,
+      stroked: true,
+      pickable: true,
+      autoHighlight: true,
+      highlightColor: [255,255,255,100],
+      radiusMinPixels: 4,
+      radiusMaxPixels: 30
+    }));
+  }
+
+  // CHOKEPOINTS
+  layers.push(new deck.ScatterplotLayer({
+    id: 'chokepoints',
+    data: CHOKEPOINTS,
+    getPosition: d => [d.lng, d.lat],
+    getRadius: 60000,
+    getFillColor: d => d.status === 'disrupted' ? [239,68,68,160] : d.status === 'normal' ? [34,197,94,120] : [245,158,11,140],
+    getLineColor: d => d.status === 'disrupted' ? [239,68,68,255] : d.status === 'normal' ? [34,197,94,200] : [245,158,11,200],
+    lineWidthMinPixels: 2,
+    stroked: true,
+    pickable: true,
+    autoHighlight: true,
+    radiusMinPixels: 8,
+    radiusMaxPixels: 25
+  }));
+
+  // PORTS
+  layers.push(new deck.ScatterplotLayer({
+    id: 'ports',
+    data: PORTS,
+    getPosition: d => [d.lng, d.lat],
+    getRadius: 15000,
+    getFillColor: [218,165,32,180],
+    getLineColor: [218,165,32,255],
+    lineWidthMinPixels: 1,
+    stroked: true,
+    pickable: true,
+    autoHighlight: true,
+    radiusMinPixels: 3,
+    radiusMaxPixels: 10
+  }));
+
+  // MERIT POWER PLANTS — 123 real plants with coordinates (from 335 total across 6 states)
+  if (layerVisibility['plants']) {
+    layers.push(new deck.ScatterplotLayer({
+      id: 'plants',
+      data: MERIT_PLANTS,
+      getPosition: d => [d.ln, d.la],
+      getRadius: d => Math.max(6000, Math.sqrt(d.mw) * 800),
+      getFillColor: d => [...(MERIT_FUEL_COLORS_RGBA[d.f] || [150,150,150]), 180],
+      getLineColor: d => [...(MERIT_FUEL_COLORS_RGBA[d.f] || [150,150,150]), 255],
+      lineWidthMinPixels: 1,
+      stroked: true,
+      pickable: true,
+      autoHighlight: true,
+      highlightColor: [255,255,255,100],
+      radiusMinPixels: 3,
+      radiusMaxPixels: 22
+    }));
+  }
+
+  deckgl.setProps({ layers });
+}
+
+// ============================================================
+// INTERACTIONS
+// ============================================================
+function toggleLayer(el) {
+  const layer = el.dataset.layer;
+  el.classList.toggle('active');
+  layerVisibility[layer] = el.classList.contains('active');
+  updateLayers();
+}
+
+function toggleSources() {
+  document.getElementById('sources-panel').classList.toggle('visible');
+}
+
+function handleEntityClick(obj, layerId) {
+  selectedEntity = { data: obj, type: layerId };
+  if (layerId === 'refineries') renderRefineryDetail(obj);
+  else if (layerId === 'states') renderStateDetail(obj);
+  else if (layerId === 'chokepoints') renderChokepointDetail(obj);
+  else if (layerId === 'ports') renderPortDetail(obj);
+  else if (layerId === 'plants') renderPlantDetail(obj);
+}
+
+function clearSelection() {
+  selectedEntity = null;
+  document.getElementById('detail-default').style.display = 'block';
+  document.getElementById('detail-entity').style.display = 'none';
+}
+
+function showEntityPanel(html) {
+  document.getElementById('detail-default').style.display = 'none';
+  const ep = document.getElementById('detail-entity');
+  ep.innerHTML = html;
+  ep.style.display = 'block';
+}
+
+// ============================================================
+// CRISIS STATS PER DAY
+// ============================================================
+function getCrisisStatsForDay(day) {
+  // All data sourced from official/primary sources:
+  // Transit: IMF PortWatch (portwatch.imf.org/pages/chokepoint6)
+  // Brent: EIA spot prices (eia.gov/dnav/pet/pet_pri_spt_s1_d.htm)
+  // Indian basket: PPAC (ppac.gov.in/prices/international-prices-of-crude-oil)
+  // Russia share: PPAC monthly crude imports (ppac.gov.in/crude-oil/import)
+  // SPR: ISPRL (isprl.co.in), PIB press releases
+  // LPG: PPAC LPG import data (ppac.gov.in/lpg/import), PIB
+  const stats = {
+    'day0': { label: 'Pre-Crisis (Feb 27)', transit: 'Normal (~138/day)', brent: '$69/bbl', basket: '$63/bbl', russia: '20.1%', spr: '~74 days', lpg: 'Normal supply' },
+    'day1': { label: 'Day 1 (Feb 28)', transit: '70% drop in hours', brent: '$80-82/bbl (+13%)', basket: '$72/bbl', russia: '20.1%', spr: '~74 days', lpg: 'No shortage yet' },
+    'day7': { label: 'Day 7 (Mar 6)', transit: '~90% collapsed', brent: '$100+/bbl', basket: '$110/bbl', russia: '~28%', spr: '~60 days', lpg: '90% BLOCKED — rationing starts' },
+    'day30': { label: 'Day 30 (Mar 28)', transit: '95.6% collapsed', brent: '$101/bbl (+46%)', basket: '$146/bbl peak', russia: '45.2% (+82.3%)', spr: '9.5 days (SPR only)', lpg: '80% commercial cut' },
+    'day90': { label: 'Day 90 (Projected)', transit: '>95% disrupted', brent: '$90-110/bbl', basket: '$120-140/bbl', russia: '50%+ projected', spr: '<7 days (SPR only)', lpg: '15-20% deficit persists' },
+    'today': { label: 'Today (Apr 2)', transit: '95.6% collapsed', brent: '$101/bbl (+46%)', basket: '$146/bbl peak', russia: '45.2% (+82.3%)', spr: '9.5 days (SPR only)', lpg: 'IRGC toll active' }
+  };
+  return stats[day] || stats['today'];
+}
+
+function getCrisisStatsHTML(day) {
+  const s = getCrisisStatsForDay(day);
+  const isPreCrisis = (day === 'day0');
+  const isSevere = (day === 'day7' || day === 'day30' || day === 'day90' || day === 'today');
+  const isLPGCrisis = (day === 'day7');
+  const isRussiaSurge = (day === 'day30' || day === 'day90' || day === 'today');
+
+  let html = '';
+  html += `<div class="stat-row"><span class="stat-label">Transit</span><span class="stat-value ${isPreCrisis ? 'green' : 'alert'}">${s.transit}</span></div>`;
+  html += `<div class="stat-row"><span class="stat-label">Brent</span><span class="stat-value ${isPreCrisis ? '' : 'alert'}">${s.brent}</span></div>`;
+  html += `<div class="stat-row"><span class="stat-label">Indian basket</span><span class="stat-value ${isSevere ? 'alert' : ''}">${s.basket}</span></div>`;
+  html += `<div class="stat-row"><span class="stat-label">Russia share</span><span class="stat-value ${isRussiaSurge ? 'oil' : ''}">${s.russia}</span></div>`;
+  html += `<div class="stat-row"><span class="stat-label">SPR cover</span><span class="stat-value ${isSevere ? 'alert' : ''}">${s.spr}</span></div>`;
+  if (isLPGCrisis) {
+    html += `<div class="stat-row" style="background:rgba(239,68,68,0.08);padding:5px 4px;border-radius:3px;margin-top:4px"><span class="stat-label" style="color:var(--alert);font-weight:600">LPG CRISIS</span><span class="stat-value alert">${s.lpg}</span></div>`;
+  } else if (day !== 'day0' && day !== 'day1') {
+    html += `<div class="stat-row"><span class="stat-label">LPG</span><span class="stat-value ${isSevere ? 'alert' : ''}">${s.lpg}</span></div>`;
+  }
+  return html;
+}
+
+// ============================================================
+// DETAIL PANEL RENDERING
+// ============================================================
+function renderDefaultDetail() {
+  const el = document.getElementById('detail-default');
+  el.innerHTML = `
+    <div class="detail-section">
+      <div class="detail-title">India's Energy Nervous System</div>
+      <div class="detail-divider"></div>
+    </div>
+
+    <div class="detail-section">
+      <div class="detail-title" style="font-size:11px; color:var(--text-muted)">IMPORT DEPENDENCY</div>
+      <div class="stat-row">
+        <span class="stat-label">Oil</span>
+        <span class="stat-value oil">85% imported</span>
+        <button class="expand-btn" onclick="toggleExpand('oil-detail')">&#9656; Details</button>
+      </div>
+      <div id="oil-detail" class="expand-content">
+        <div style="font-family:var(--font-data);font-size:11px;color:var(--text-primary);margin-bottom:6px;font-weight:600">CRUDE OIL IMPORTS -- 242.4 MMT (4.84 mb/d)</div>
+        <div class="expand-content visible" style="display:block;border:0;padding:0;">
+          <div class="detail-row"><span class="country">Russia</span><span class="pct">36.3%</span><span class="vol">87.9 MMT</span><span class="mbd">1.80 mb/d</span></div>
+          <div class="detail-row"><span class="country">Iraq</span><span class="pct">20.5%</span><span class="vol">49.7 MMT</span><span class="mbd">1.02 mb/d</span></div>
+          <div class="detail-row"><span class="country">Saudi Arabia</span><span class="pct">13.0%</span><span class="vol">31.5 MMT</span><span class="mbd">0.64 mb/d</span></div>
+          <div class="detail-row"><span class="country">UAE</span><span class="pct">9.0%</span><span class="vol">21.8 MMT</span><span class="mbd">0.45 mb/d</span></div>
+          <div class="detail-row"><span class="country">USA</span><span class="pct">3.5%</span><span class="vol">8.5 MMT</span><span class="mbd">0.17 mb/d</span></div>
+          <div class="detail-row"><span class="country">Kuwait</span><span class="pct">3.0%</span><span class="vol">7.3 MMT</span><span class="mbd">0.15 mb/d</span></div>
+          <div class="detail-row"><span class="country">Others</span><span class="pct">14.7%</span><span class="vol">35.7 MMT</span><span class="mbd">0.61 mb/d</span></div>
+        </div>
+        <a class="source-link" href="https://ppac.gov.in/import-export" target="_blank">Source: PPAC Crude Oil Import Data, FY 2024-25</a>
+      </div>
+
+      <div class="stat-row">
+        <span class="stat-label">Coal</span>
+        <span class="stat-value">27% imported</span>
+        <button class="expand-btn" onclick="toggleExpand('coal-detail')">&#9656; Details</button>
+      </div>
+      <div id="coal-detail" class="expand-content">
+        <div style="font-family:var(--font-data);font-size:11px;color:var(--text-primary);margin-bottom:6px;font-weight:600">COAL IMPORTS -- 263.6 MMT</div>
+        <div class="expand-content visible" style="display:block;border:0;padding:0;">
+          <div class="detail-row"><span class="country">Indonesia</span><span class="pct">60%</span><span class="vol">158 MMT</span><span class="mbd">Thermal</span></div>
+          <div class="detail-row"><span class="country">South Africa</span><span class="pct">14%</span><span class="vol">37 MMT</span><span class="mbd">Mixed</span></div>
+          <div class="detail-row"><span class="country">Australia</span><span class="pct">10%</span><span class="vol">26 MMT</span><span class="mbd">Coking</span></div>
+          <div class="detail-row"><span class="country">Russia</span><span class="pct">8%</span><span class="vol">21 MMT</span><span class="mbd">Mixed</span></div>
+          <div class="detail-row"><span class="country">Others</span><span class="pct">8%</span><span class="vol">22 MMT</span><span class="mbd">Mixed</span></div>
+        </div>
+        <a class="source-link" href="https://ppac.gov.in/import-export" target="_blank">Source: PPAC, DGCI&S, FY 2024-25</a>
+      </div>
+
+      <div class="stat-row">
+        <span class="stat-label">Gas (LNG)</span>
+        <span class="stat-value lng">50% imported</span>
+        <button class="expand-btn" onclick="toggleExpand('gas-detail')">&#9656; Details</button>
+      </div>
+      <div id="gas-detail" class="expand-content">
+        <div style="font-family:var(--font-data);font-size:11px;color:var(--text-primary);margin-bottom:6px;font-weight:600">LNG IMPORTS -- ~35 MMTPA (+17% YoY)</div>
+        <div class="expand-content visible" style="display:block;border:0;padding:0;">
+          <div class="detail-row"><span class="country">Qatar</span><span class="pct">~50%</span><span class="vol">17.5 MMTPA</span><span class="mbd">Hormuz</span></div>
+          <div class="detail-row"><span class="country">USA</span><span class="pct">~11%</span><span class="vol">3.5-4.0</span><span class="mbd">Cape/Suez</span></div>
+          <div class="detail-row"><span class="country">UAE (ADNOC)</span><span class="pct">~9%</span><span class="vol">3.0</span><span class="mbd">Hormuz</span></div>
+          <div class="detail-row"><span class="country">Australia</span><span class="pct">~8%</span><span class="vol">2.5-3.0</span><span class="mbd">Direct</span></div>
+          <div class="detail-row"><span class="country">Nigeria</span><span class="pct">~6%</span><span class="vol">2.0</span><span class="mbd">Cape</span></div>
+          <div class="detail-row"><span class="country">Others</span><span class="pct">~16%</span><span class="vol">6.0</span><span class="mbd">Various</span></div>
+        </div>
+        <a class="source-link" href="https://ppac.gov.in/natural-gas/import" target="_blank">Source: PPAC LNG Imports, FY 2024-25</a>
+      </div>
+    </div>
+
+    <div class="detail-section">
+      <div class="detail-title" style="font-size:11px; color:var(--text-muted)">HORMUZ EXPOSURE</div>
+      <div class="stat-row">
+        <span class="stat-label">Crude</span>
+        <span class="stat-value alert">45% via Hormuz</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">LNG</span>
+        <span class="stat-value alert">60% via Hormuz</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">LPG</span>
+        <span class="stat-value alert">90% via Hormuz</span>
+      </div>
+      <a class="source-link" href="https://ppac.gov.in/import-export" target="_blank">Source: PPAC Import/Export Data; chokepoint exposure derived from route analysis</a>
+      ${!stateGeoJson && layerVisibility['vulnerability'] ? '<div class="geojson-fallback-note">State boundaries: approximate positions (GeoJSON unavailable)</div>' : ''}
+    </div>
+
+    <div class="detail-section">
+      <div class="detail-title" style="font-size:11px; color:var(--text-muted)">CRISIS STATUS &mdash; ${getCrisisStatsForDay(selectedCascadeDay).label}</div>
+      ${getCrisisStatsHTML(selectedCascadeDay)}
+      <a class="source-link" href="https://portwatch.imf.org/pages/chokepoint6" target="_blank">Source: IMF PortWatch, PPAC, EIA, IEA Oil Market Report</a>
+    </div>
+
+    <div class="detail-section">
+      <div class="detail-title" style="font-size:11px; color:var(--text-muted)">GRID</div>
+      <div class="stat-row">
+        <span class="stat-label">Total capacity</span>
+        <span class="stat-value green">505.9 GW</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">Coal generation</span>
+        <span class="stat-value">74.5% of total</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">Solar capacity</span>
+        <span class="stat-value green">97.4 GW (+34% YoY)</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">Total generation</span>
+        <span class="stat-value">2,036.5 TWh</span>
+      </div>
+      <a class="source-link" href="https://ember-energy.org/data/yearly-electricity-data/" target="_blank">Source: Ember Energy, 2024</a>
+    </div>
+
+    <div class="detail-section">
+      <div class="detail-title" style="font-size:11px; color:var(--text-muted)">RESERVES</div>
+      <div class="stat-row">
+        <span class="stat-label">SPR</span>
+        <span class="stat-value alert">9.5 days crude</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">SPR fill</span>
+        <span class="stat-value alert">64% (3.37 of 5.33 MMT)</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">Total cover (SPR+comm)</span>
+        <span class="stat-value">74 days</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">IEA minimum</span>
+        <span class="stat-value" style="color:var(--text-muted)">90 days</span>
+      </div>
+      <a class="source-link" href="https://isprl.co.in/" target="_blank">Source: ISPRL (Strategic Petroleum Reserves), PPAC, PIB</a>
+    </div>
+
+    <div class="detail-section">
+      <div class="detail-title" style="font-size:11px; color:var(--alert)">CRISIS CASCADE &mdash; ${CASCADE_DATA[selectedCascadeDay].label}</div>
+      <div class="detail-divider" style="background:linear-gradient(90deg, var(--alert), var(--border))"></div>
+      <div id="cascade-content"></div>
+    </div>
+  `;
+  renderCascadeContent();
+}
+
+function renderCascadeContent() {
+  const data = CASCADE_DATA[selectedCascadeDay];
+  const el = document.getElementById('cascade-content');
+  if (!el) return;
+  el.innerHTML = `
+    <div style="font-family:var(--font-data);font-size:11px;color:var(--text-muted);margin-bottom:6px">${data.date}</div>
+    <ul class="cascade-narrative">
+      ${data.items.map(item => `<li>${item}</li>`).join('')}
+    </ul>
+  `;
+}
+
+function selectCascadeDay(day) {
+  selectedCascadeDay = day;
+
+  // Update header timeline buttons
+  document.querySelectorAll('.timeline-btn').forEach(b => b.classList.remove('active'));
+  const activeBtn = document.querySelector(`.timeline-btn[data-day="${day}"]`);
+  if (activeBtn) activeBtn.classList.add('active');
+
+  // Update timeline connectors (active up to selected day)
+  const dayOrder = ['day0', 'day1', 'day7', 'day30', 'day90', 'today'];
+  const dayIndex = dayOrder.indexOf(day);
+  const connectors = document.querySelectorAll('.timeline-connector');
+  connectors.forEach((c, i) => {
+    c.classList.toggle('active', i < dayIndex);
+  });
+
+  // Map visual state per crisis day
+  switch(day) {
+    case 'day0': // Pre-crisis: everything normal
+      currentTime = 'feb';
+      break;
+    case 'day1': // Day 1: Hormuz routes start dimming, prices spike
+      currentTime = 'mar';
+      break;
+    case 'day7': // Day 7: LPG crisis, Hormuz nearly shut
+      currentTime = 'mar';
+      break;
+    case 'day30': // Day 30: Russia routes thickened, rerouting visible
+      currentTime = 'apr';
+      break;
+    case 'day90': // Day 90: projected state
+      currentTime = 'apr';
+      break;
+    case 'today': // Current state
+      currentTime = 'apr';
+      break;
+  }
+
+  // Store the crisis intensity for updateLayers to use
+  window.crisisIntensity = {
+    'day0': 0,      // no crisis
+    'day1': 0.3,    // early disruption
+    'day7': 0.7,    // severe
+    'day30': 0.85,  // near-total
+    'day90': 0.9,   // sustained
+    'today': 0.85   // current
+  }[day];
+
+  updateLayers();
+  renderCascadeContent(); // Update detail panel narrative
+  renderDefaultPanel();   // Refresh the summary stats if showing default view
+  renderSignalCards();    // Update signal card values to match crisis day
+}
+
+function renderDefaultPanel() {
+  // Only refresh if the default panel is visible (not in entity detail view)
+  const defaultPanel = document.getElementById('detail-default');
+  if (defaultPanel && defaultPanel.style.display !== 'none') {
+    renderDefaultDetail();
+  }
+}
+
+function toggleExpand(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.toggle('visible');
+}
+
+// ============================================================
+// ENTITY DETAIL RENDERERS
+// ============================================================
+function renderRefineryDetail(r) {
+  const sourceEntries = Object.entries(r.sources);
+  const maxVal = Math.max(...sourceEntries.map(([,v]) => v));
+  const barsHTML = sourceEntries.map(([name, pct]) => {
+    const color = name.includes('Russia') ? '#FFB347' : name.includes('Domestic') ? '#22c55e' : '#3b82f6';
+    return `<div class="bar-container">
+      <div class="bar-label">${name.replace(/_/g,' ')}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${(pct/100)*100}%;background:${color}"></div></div>
+      <div class="bar-value">${pct}%</div>
+    </div>`;
+  }).join('');
+
+  showEntityPanel(`
+    <button class="back-btn" onclick="clearSelection()">&#8592; Back to summary</button>
+    <div class="refinery-card">
+      <div class="name">${r.name}</div>
+      <div class="operator">${r.owner}</div>
+      <div class="meta-row">
+        <div class="meta-item"><div class="meta-label">Capacity</div><div class="meta-val">${r.capacity} MMTPA</div></div>
+        <div class="meta-item"><div class="meta-label">State</div><div class="meta-val">${r.state}</div></div>
+        <div class="meta-item"><div class="meta-label">Hormuz Exposure</div><div class="meta-val" style="color:${hormuzColorHex(r.hormuz)}">${r.hormuz}%</div></div>
+        <div class="meta-item"><div class="meta-label">Location</div><div class="meta-val">${r.lat.toFixed(2)}N, ${r.lng.toFixed(2)}E</div></div>
+      </div>
+    </div>
+
+    <div class="detail-section">
+      <div class="detail-title" style="font-size:11px; color:var(--text-muted)">CRUDE SOURCE MIX</div>
+      ${barsHTML}
+    </div>
+
+    <div class="detail-section">
+      <div class="detail-title" style="font-size:11px; color:var(--text-muted)">CRISIS STATUS</div>
+      <div style="font-family:var(--font-data);font-size:11px;color:var(--text-secondary);line-height:1.6">${r.crisis}</div>
+    </div>
+
+    <a class="source-link" href="https://ppac.gov.in/infrastructure/installed-refinery-capacity" target="_blank">Source: PPAC Refinery Capacity, PPAC Crude Import by Source</a>
+  `);
+}
+
+function renderStateDetail(s) {
+  const gen = s.gen || {};
+  const totalTwh = Object.values(gen).reduce((sum, v) => sum + (v.twh || 0), 0);
+  const genBarsHTML = Object.entries(gen).map(([fuel, data]) => {
+    const pct = totalTwh > 0 ? (data.twh / totalTwh * 100) : 0;
+    const color = FUEL_COLORS_HEX[fuel] || '#666';
+    return `<div class="gen-mix-row">
+      <div class="gen-mix-label">${fuel.charAt(0).toUpperCase()+fuel.slice(1)}</div>
+      <div class="gen-mix-bar"><div class="gen-mix-fill" style="width:${pct}%;background:${color}"></div></div>
+      <div class="gen-mix-value">${data.gw} GW / ${data.twh} TWh</div>
+    </div>`;
+  }).join('');
+
+  showEntityPanel(`
+    <button class="back-btn" onclick="clearSelection()">&#8592; Back to summary</button>
+    <div class="state-card">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <div class="name" style="font-family:var(--font-data);font-size:14px;font-weight:700">${s.name}</div>
+        <span class="vuln-badge ${vulnBadgeClass(s.vulnerability)}">${s.vulnerability}</span>
+      </div>
+      <div style="font-family:var(--font-data);font-size:11px;color:var(--text-secondary);margin-bottom:10px">
+        Rank #${s.rank} of 17 states analyzed
+      </div>
+    </div>
+
+    <div class="detail-section">
+      <div class="detail-title" style="font-size:11px; color:var(--text-muted)">WHY ${s.vulnerability}</div>
+      <div style="font-family:var(--font-data);font-size:11px;color:var(--text-secondary);line-height:1.6">
+        ${s.key_exposure}<br>
+        Refining capacity: ${s.refining_mmtpa} MMTPA<br>
+        LNG terminals: ${s.lng_terminals}
+      </div>
+    </div>
+
+    <div class="detail-section">
+      <div class="detail-title" style="font-size:11px; color:var(--text-muted)">GENERATION MIX</div>
+      ${genBarsHTML || '<div style="font-family:var(--font-data);font-size:11px;color:var(--text-muted)">Data limited for this state</div>'}
+      <div style="margin-top:4px;font-family:var(--font-data);font-size:10px;color:var(--text-muted)">Total: ${totalTwh.toFixed(1)} TWh</div>
+    </div>
+
+    <a class="source-link" href="https://ember-energy.org/data/india-electricity-data/" target="_blank">Source: Ember India Electricity Data, 2024</a>
+  `);
+}
+
+function renderChokepointDetail(c) {
+  const statusColor = c.status === 'disrupted' ? '#ef4444' : c.status === 'normal' ? '#22c55e' : '#f59e0b';
+  showEntityPanel(`
+    <button class="back-btn" onclick="clearSelection()">&#8592; Back to summary</button>
+    <div class="chokepoint-card">
+      <div class="name" style="font-family:var(--font-data);font-size:14px;font-weight:700">${c.name}</div>
+      <div style="font-family:var(--font-data);font-size:11px;color:${statusColor};margin-bottom:10px;font-weight:600">${c.status.toUpperCase()}</div>
+    </div>
+
+    <div class="detail-section">
+      <div class="stat-row"><span class="stat-label">Global flow</span><span class="stat-value">${c.flow_mbd} mb/d</span></div>
+      <div class="stat-row"><span class="stat-label">India exposure</span><span class="stat-value">${c.india_pct}%</span></div>
+      ${c.india_crude_pct ? `<div class="stat-row"><span class="stat-label">India crude via here</span><span class="stat-value alert">${c.india_crude_pct}%</span></div>` : ''}
+      ${c.india_lng_pct ? `<div class="stat-row"><span class="stat-label">India LNG via here</span><span class="stat-value alert">${c.india_lng_pct}%</span></div>` : ''}
+      ${c.india_lpg_pct ? `<div class="stat-row"><span class="stat-label">India LPG via here</span><span class="stat-value alert">${c.india_lpg_pct}%</span></div>` : ''}
+      ${c.bypass_mbd ? `<div class="stat-row"><span class="stat-label">Bypass capacity</span><span class="stat-value">${c.bypass_mbd} mb/d (65% gap)</span></div>` : ''}
+    </div>
+
+    <div class="detail-section">
+      <div class="detail-title" style="font-size:11px; color:var(--text-muted)">CURRENT STATUS</div>
+      <div style="font-family:var(--font-data);font-size:11px;color:var(--text-secondary);line-height:1.6">${c.crisis}</div>
+    </div>
+
+    <a class="source-link" href="https://portwatch.imf.org/pages/chokepoint6" target="_blank">Source: IMF PortWatch, EIA, Lloyd's List</a>
+  `);
+}
+
+function renderPlantDetail(p) {
+  const fuelLabel = p.f.charAt(0).toUpperCase() + p.f.slice(1);
+  const fColor = MERIT_FUEL_COLORS[p.f] || '#999';
+  const vcStr = p.vc ? '\u20B9' + p.vc.toFixed(2) + '/kWh' : 'N/A';
+  const scStr = p.sc ? p.sc.toLocaleString() + ' MWh' : 'N/A';
+
+  // Find other plants in the same state for the drill-down list
+  const statePlants = MERIT_PLANTS.filter(mp => mp.s === p.s).sort((a,b) => a.r - b.r);
+  const plantListHTML = statePlants.slice(0, 15).map(mp => {
+    const fc = MERIT_FUEL_COLORS[mp.f] || '#999';
+    const isCurrent = (mp.n === p.n && mp.la === p.la && mp.ln === p.ln);
+    return `<div class="stat-row" style="${isCurrent ? 'background:rgba(255,255,255,0.04);' : ''}">
+      <span class="stat-label" style="font-size:10px">#${mp.r}</span>
+      <span class="stat-value" style="font-size:10px;color:${fc}">${mp.n.substring(0,25)}</span>
+      <span class="stat-value" style="font-size:10px">${mp.mw.toLocaleString()} MW</span>
+    </div>`;
+  }).join('');
+
+  showEntityPanel(`
+    <button class="back-btn" onclick="clearSelection()">&#8592; Back to summary</button>
+    <div class="refinery-card">
+      <div class="name" style="color:${fColor}">${p.n}</div>
+      <div class="operator">${p.o}</div>
+      <div style="height:3px;background:${fColor};border-radius:2px;margin:6px 0 10px 0;opacity:0.6"></div>
+      <div class="meta-row">
+        <div class="meta-item"><div class="meta-label">TYPE</div><div class="meta-val" style="color:${fColor}">${fuelLabel}</div></div>
+        <div class="meta-item"><div class="meta-label">CAPACITY</div><div class="meta-val">${p.mw.toLocaleString()} MW</div></div>
+        <div class="meta-item"><div class="meta-label">MERIT RANK</div><div class="meta-val">#${p.r} (${p.s})</div></div>
+        <div class="meta-item"><div class="meta-label">VARIABLE COST</div><div class="meta-val">${vcStr}</div></div>
+        <div class="meta-item"><div class="meta-label">SCHEDULED</div><div class="meta-val">${scStr}</div></div>
+        <div class="meta-item"><div class="meta-label">STATE</div><div class="meta-val">${p.s}</div></div>
+      </div>
+    </div>
+
+    <div class="detail-section">
+      <div class="detail-title" style="font-size:11px; color:var(--text-muted)">MERIT ORDER — ${p.s} (Top 15)</div>
+      ${plantListHTML}
+      ${statePlants.length > 15 ? '<div style="font-family:var(--font-data);font-size:10px;color:var(--text-muted);margin-top:4px">+' + (statePlants.length - 15) + ' more plants</div>' : ''}
+    </div>
+
+    <a class="source-link" href="https://meritindia.in/" target="_blank">Source: MERIT India (meritindia.in) — Ministry of Power</a>
+  `);
+}
+
+function renderPortDetail(p) {
+  showEntityPanel(`
+    <button class="back-btn" onclick="clearSelection()">&#8592; Back to summary</button>
+    <div class="refinery-card">
+      <div class="name">${p.name}</div>
+      <div class="operator">${p.operator}</div>
+      <div class="meta-row">
+        <div class="meta-item"><div class="meta-label">Capacity</div><div class="meta-val">${p.capacity} MMTPA</div></div>
+        <div class="meta-item"><div class="meta-label">Commodities</div><div class="meta-val">${p.commodities.join(', ')}</div></div>
+      </div>
+    </div>
+    ${p.highlight ? `<div style="font-family:var(--font-data);font-size:11px;color:var(--text-secondary);line-height:1.6;margin-top:8px">${p.highlight}</div>` : ''}
+    <a class="source-link" href="https://ppac.gov.in/infrastructure/installed-refinery-capacity" target="_blank">Source: PPAC, India Ports Association</a>
+  `);
+}
+
+// Close sources panel on outside click
+document.addEventListener('click', (e) => {
+  const panel = document.getElementById('sources-panel');
+  const btn = document.getElementById('sources-btn');
+  if (panel.classList.contains('visible') && !panel.contains(e.target) && e.target !== btn) {
+    panel.classList.remove('visible');
+  }
+});
+
+// Share / copy link
+function copyShareLink() {
+  const url = window.location.href;
+  navigator.clipboard.writeText(url).then(() => {
+    const btn = document.querySelector('.share-btn');
+    btn.textContent = '\u2713 Copied';
+    setTimeout(() => btn.innerHTML = '&#128203; Share', 2000);
+  }).catch(() => {
+    // Fallback for file:// protocol where clipboard API may not work
+    prompt('Copy this link:', url);
+  });
+}
+</script>
+</body>
+</html>
