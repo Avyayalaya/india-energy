@@ -12,7 +12,7 @@
 <meta name="twitter:title" content="India's Energy Nervous System">
 <meta name="twitter:description" content="Every vessel. Every plant. Every megawatt. The Hormuz crisis in real-time from public data.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=DM+Sans:wght@400;500;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
 <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet">
 <script src="https://unpkg.com/deck.gl@8.9.35/dist.min.js"></script>
@@ -28,14 +28,12 @@
   --oil: #FFB347;
   --coal: #A0A0A0;
   --lng: #4FC3F7;
-  --refinery-high: #ef4444;
-  --refinery-med: #f59e0b;
-  --refinery-low: #22c55e;
-  --alert: #dc2626;
-  --accent: #3b82f6;
+  --alert: #ef4444;
   --green: #22c55e;
+  --accent: #4FC3F7;
   --font-data: 'JetBrains Mono', monospace;
   --font-ui: 'DM Sans', sans-serif;
+  --font-heading: 'Source Serif 4', 'Georgia', serif;
 }
 html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(--text-primary); font-family: var(--font-ui); }
 
@@ -56,26 +54,26 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
 #header {
   display: flex; align-items: center; justify-content: space-between;
   padding: 0 20px;
-  background: var(--surface);
+  background: var(--bg);
   border-bottom: 1px solid var(--border);
   z-index: 100;
 }
 #header h1 {
-  font-family: var(--font-data); font-size: 15px; font-weight: 600;
-  letter-spacing: 1.5px; text-transform: uppercase;
-  background: linear-gradient(90deg, var(--text-primary), var(--oil));
+  font-family: var(--font-heading); font-size: 17px; font-weight: 700;
+  letter-spacing: 0.5px;
+  background: linear-gradient(135deg, #4FC3F7, #e2e8f0);
   -webkit-background-clip: text; -webkit-text-fill-color: transparent;
 }
 .header-toggles { display: flex; gap: 6px; align-items: center; }
 .layer-toggle {
   display: flex; align-items: center; gap: 5px;
   padding: 4px 10px; border-radius: 4px;
-  background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+  background: rgba(255,255,255,0.03); border: 1px solid var(--border);
   cursor: pointer; font-size: 11px; font-family: var(--font-data);
   color: var(--text-secondary); transition: all 0.2s;
   user-select: none;
 }
-.layer-toggle.active { border-color: rgba(255,255,255,0.2); color: var(--text-primary); background: rgba(255,255,255,0.08); }
+.layer-toggle.active { border-color: var(--accent); color: var(--text-primary); background: rgba(255,255,255,0.06); }
 .layer-toggle .dot { width: 8px; height: 8px; border-radius: 50%; }
 .header-timeline { display: flex; align-items: center; gap: 8px; }
 .timeline-label { font-family: var(--font-data); font-size: 9px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
@@ -87,11 +85,11 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
   transition: all 0.2s;
 }
 .timeline-btn span { font-size: 8px; color: var(--text-muted); }
-.timeline-btn.active { background: rgba(239,68,68,0.15); border-color: var(--alert); color: var(--text-primary); }
+.timeline-btn.active { background: rgba(239,68,68,0.1); border-color: var(--alert); color: var(--alert); }
 .timeline-btn.active span { color: var(--alert); }
-.timeline-btn:hover { border-color: rgba(255,255,255,0.3); }
+.timeline-btn:hover { border-color: var(--accent); }
 .timeline-connector { width: 12px; height: 2px; background: var(--border); }
-.timeline-connector.active { background: var(--alert); }
+.timeline-connector.active { background: var(--alert); opacity: 0.6; }
 
 /* === MAP === */
 #map-panel { background: var(--bg); }
@@ -103,41 +101,48 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
 #map-tooltip {
   position: absolute; pointer-events: none; z-index: 200;
   background: rgba(17,24,39,0.95); backdrop-filter: blur(12px);
-  border: 1px solid var(--border); border-radius: 6px;
+  border: 1px solid #1e293b; border-radius: 6px;
   padding: 10px 14px; max-width: 320px;
-  font-family: var(--font-data); font-size: 11px; color: var(--text-primary);
+  font-family: var(--font-data); font-size: 11px; color: #e2e8f0;
   display: none; line-height: 1.5;
 }
-#map-tooltip .tt-title { font-weight: 600; font-size: 12px; margin-bottom: 4px; }
+#map-tooltip .tt-title { font-weight: 600; font-size: 12px; margin-bottom: 4px; color: #e2e8f0; }
 #map-tooltip .tt-row { display: flex; justify-content: space-between; gap: 12px; }
-#map-tooltip .tt-label { color: var(--text-secondary); }
-#map-tooltip .tt-value { color: var(--text-primary); font-weight: 500; }
+#map-tooltip .tt-label { color: #94a3b8; }
+#map-tooltip .tt-value { color: #e2e8f0; font-weight: 500; }
 
 /* === DETAIL PANEL === */
 #detail-panel {
-  background: var(--surface);
+  background: var(--bg);
   border-left: 1px solid var(--border);
   overflow-y: auto; overflow-x: hidden;
-  scrollbar-width: thin; scrollbar-color: var(--border) transparent;
+  scrollbar-width: thin; scrollbar-color: var(--border) var(--bg);
+  position: relative;
 }
 #detail-panel::-webkit-scrollbar { width: 5px; }
-#detail-panel::-webkit-scrollbar-track { background: transparent; }
+#detail-panel::-webkit-scrollbar-track { background: var(--bg); }
 #detail-panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 
 .detail-content { padding: 16px 18px; }
 .detail-section { margin-bottom: 18px; }
+.detail-title,
+.cascade-header h2,
+.expanded-panel-title,
+#header h1 {
+  font-family: var(--font-heading);
+}
 .detail-title {
-  font-family: var(--font-data); font-size: 13px; font-weight: 600;
-  letter-spacing: 1px; text-transform: uppercase;
-  margin-bottom: 10px; color: var(--text-primary);
+  font-family: var(--font-heading); font-size: 14px; font-weight: 600;
+  letter-spacing: 0.3px;
+  margin-bottom: 10px; color: var(--accent);
 }
 .detail-divider {
-  height: 1px; background: linear-gradient(90deg, var(--oil), var(--border));
+  height: 1px; background: linear-gradient(90deg, var(--accent), var(--border));
   margin-bottom: 12px;
 }
 .stat-row {
   display: flex; justify-content: space-between; align-items: center;
-  padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.03);
+  padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.04);
   font-family: var(--font-data); font-size: 12px;
 }
 .stat-label { color: var(--text-secondary); }
@@ -149,7 +154,7 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
 
 .expand-btn {
   display: inline-flex; align-items: center; gap: 4px;
-  color: var(--lng); font-family: var(--font-data); font-size: 11px;
+  color: var(--accent); font-family: var(--font-data); font-size: 11px;
   cursor: pointer; border: none; background: none;
   padding: 2px 0; transition: color 0.2s;
 }
@@ -159,7 +164,7 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
 .expand-content .detail-row {
   display: grid; grid-template-columns: 1fr 60px 70px 60px;
   padding: 3px 0; font-family: var(--font-data); font-size: 11px;
-  border-bottom: 1px solid rgba(255,255,255,0.02);
+  border-bottom: 1px solid rgba(255,255,255,0.04);
 }
 .expand-content .detail-row .country { color: var(--text-primary); }
 .expand-content .detail-row .pct { color: var(--oil); text-align: right; }
@@ -167,23 +172,24 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
 .expand-content .detail-row .mbd { color: var(--text-muted); text-align: right; }
 
 .source-link {
-  color: var(--lng); text-decoration: none; font-family: var(--font-data);
+  color: var(--accent); text-decoration: none; font-family: var(--font-data);
   font-size: 10px; display: inline-block; margin-top: 4px;
-  opacity: 0.7; transition: opacity 0.2s;
+  font-style: italic; opacity: 0.7; transition: opacity 0.2s;
 }
 .source-link:hover { opacity: 1; text-decoration: underline; }
 
 /* Bar chart inline */
 .bar-container { display: flex; align-items: center; gap: 6px; margin: 2px 0; }
 .bar-label { font-family: var(--font-data); font-size: 11px; color: var(--text-secondary); width: 60px; text-align: right; }
-.bar-track { flex: 1; height: 10px; background: rgba(255,255,255,0.04); border-radius: 2px; overflow: hidden; }
+.bar-track { flex: 1; height: 10px; background: rgba(255,255,255,0.06); border-radius: 2px; overflow: hidden; }
 .bar-fill { height: 100%; border-radius: 2px; transition: width 0.5s ease; }
 .bar-value { font-family: var(--font-data); font-size: 11px; color: var(--text-primary); width: 40px; }
 
 /* Refinery detail */
 .refinery-card, .state-card, .chokepoint-card {
-  background: rgba(255,255,255,0.02); border: 1px solid var(--border);
-  border-radius: 6px; padding: 14px; margin-bottom: 12px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 8px; padding: 14px; margin-bottom: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
 }
 .refinery-card .name { font-family: var(--font-data); font-size: 14px; font-weight: 700; margin-bottom: 2px; }
 .refinery-card .operator { font-family: var(--font-data); font-size: 11px; color: var(--text-secondary); margin-bottom: 8px; }
@@ -206,7 +212,7 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
 /* State card gen mix */
 .gen-mix-row { display: flex; align-items: center; gap: 6px; margin: 3px 0; }
 .gen-mix-label { width: 55px; font-family: var(--font-data); font-size: 10px; color: var(--text-secondary); text-align: right; }
-.gen-mix-bar { flex: 1; height: 8px; background: rgba(255,255,255,0.04); border-radius: 2px; overflow: hidden; }
+.gen-mix-bar { flex: 1; height: 8px; background: rgba(255,255,255,0.06); border-radius: 2px; overflow: hidden; }
 .gen-mix-fill { height: 100%; border-radius: 2px; }
 .gen-mix-value { width: 55px; font-family: var(--font-data); font-size: 10px; color: var(--text-primary); }
 
@@ -216,12 +222,12 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
   font-family: var(--font-data); font-size: 10px; font-weight: 600;
   text-transform: uppercase; letter-spacing: 0.5px;
 }
-.vuln-extreme { background: rgba(220,38,38,0.2); color: #ef4444; }
-.vuln-high { background: rgba(239,68,68,0.15); color: #f87171; }
+.vuln-extreme { background: rgba(239,68,68,0.15); color: #ef4444; }
+.vuln-high { background: rgba(239,68,68,0.12); color: #ef4444; }
 .vuln-moderate-high { background: rgba(245,158,11,0.15); color: #f59e0b; }
-.vuln-moderate { background: rgba(245,158,11,0.12); color: #fbbf24; }
-.vuln-low-moderate { background: rgba(234,179,8,0.1); color: #facc15; }
-.vuln-low { background: rgba(34,197,94,0.1); color: #4ade80; }
+.vuln-moderate { background: rgba(245,158,11,0.12); color: #f59e0b; }
+.vuln-low-moderate { background: rgba(245,158,11,0.08); color: #fbbf24; }
+.vuln-low { background: rgba(34,197,94,0.12); color: #22c55e; }
 .vuln-minimal { background: rgba(34,197,94,0.08); color: #22c55e; }
 
 /* Back button */
@@ -241,22 +247,24 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
   font-family: var(--font-data); font-size: 11px;
   min-height: 80px;
   gap: 8px;
+  color: var(--text-primary);
 }
 .signal-bar { display: flex; gap: 10px; flex: 1; align-items: stretch; }
 .signal-card {
   flex: 1; max-width: 200px; min-width: 160px;
-  background: rgba(255,255,255,0.02);
+  background: var(--bg);
   border: 1px solid var(--border);
   border-radius: 6px;
-  padding: 8px 10px 6px 10px;
+  padding: 8px 12px 6px 12px;
   cursor: pointer;
   transition: all 0.25s;
   display: flex; flex-direction: column; justify-content: space-between;
+  border-left: 2px solid var(--border);
 }
 .signal-card:hover {
-  border-color: rgba(255,255,255,0.25);
-  box-shadow: 0 0 12px rgba(255,255,255,0.04);
-  background: rgba(255,255,255,0.04);
+  border-color: var(--accent);
+  box-shadow: 0 2px 8px rgba(79,195,247,0.1);
+  background: var(--surface);
 }
 .signal-card-header {
   display: flex; align-items: center; justify-content: space-between;
@@ -308,31 +316,47 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
   justify-content: space-between; gap: 4px; min-width: 110px;
 }
 .more-signals-btn {
-  color: var(--lng); border: 1px solid var(--border); background: transparent;
+  color: var(--accent); border: 1px solid var(--border); background: rgba(79,195,247,0.06);
   cursor: pointer; font-family: var(--font-data); font-size: 10px;
-  padding: 6px 10px; border-radius: 4px;
+  padding: 6px 12px; border-radius: 4px;
   letter-spacing: 0.5px; text-transform: uppercase;
   transition: all 0.2s; white-space: nowrap;
+  position: relative;
+}
+.more-signals-btn .signal-count-badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  background: rgba(79,195,247,0.12); color: var(--accent);
+  font-size: 9px; font-weight: 700; padding: 1px 5px;
+  border-radius: 3px; margin-left: 4px;
 }
 .more-signals-btn:hover {
-  color: var(--text-primary); border-color: rgba(255,255,255,0.3);
-  background: rgba(255,255,255,0.04);
+  color: var(--text-primary); border-color: var(--accent);
+  background: rgba(79,195,247,0.10);
+}
+@keyframes signal-btn-glow {
+  0% { box-shadow: 0 0 4px rgba(79,195,247,0); }
+  50% { box-shadow: 0 0 12px rgba(79,195,247,0.25); }
+  100% { box-shadow: 0 0 4px rgba(79,195,247,0); }
+}
+.more-signals-btn.glow-once {
+  animation: signal-btn-glow 1.8s ease-in-out 2;
 }
 #sources-btn {
-  color: var(--lng); border: none; background: none;
+  color: var(--accent); border: none; background: none;
   cursor: pointer; font-family: var(--font-data); font-size: 11px;
 }
 #sources-panel {
   display: none; position: fixed; bottom: 84px; right: 20px;
   width: 360px; max-height: 400px; overflow-y: auto;
-  background: rgba(17,24,39,0.97); backdrop-filter: blur(16px);
+  background: rgba(17,24,39,0.95); backdrop-filter: blur(16px);
   border: 1px solid var(--border); border-radius: 8px;
   padding: 16px; z-index: 300;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.3);
 }
 #sources-panel.visible { display: block; }
-#sources-panel h3 { font-family: var(--font-data); font-size: 12px; margin-bottom: 10px; }
+#sources-panel h3 { font-family: var(--font-heading); font-size: 13px; margin-bottom: 10px; color: var(--text-primary); }
 #sources-panel a {
-  display: block; color: var(--lng); text-decoration: none;
+  display: block; color: var(--accent); text-decoration: none;
   font-family: var(--font-data); font-size: 11px;
   padding: 3px 0; opacity: 0.8;
 }
@@ -345,7 +369,7 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
   padding: 4px 10px; border-radius: 4px; margin-left: 8px;
   transition: all 0.2s;
 }
-.share-btn:hover { color: var(--text-primary); border-color: rgba(255,255,255,0.3); background: rgba(255,255,255,0.04); }
+.share-btn:hover { color: var(--text-primary); border-color: var(--accent); background: rgba(79,195,247,0.06); }
 
 /* GeoJSON fallback indicator */
 .geojson-fallback-note {
@@ -364,12 +388,12 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
   display: none;
   position: fixed; bottom: 80px; left: 0; right: 0;
   max-height: 50vh; overflow-y: auto;
-  background: rgba(17,24,39,0.97); backdrop-filter: blur(16px);
-  border-top: 1px solid var(--border);
+  background: rgba(10,14,23,0.98); backdrop-filter: blur(16px);
+  border-top: 2px solid var(--accent);
   z-index: 250;
   padding: 0 0 12px 0;
-  box-shadow: 0 -8px 32px rgba(0,0,0,0.5);
-  scrollbar-width: thin; scrollbar-color: var(--border) transparent;
+  box-shadow: 0 -8px 32px rgba(0,0,0,0.3);
+  scrollbar-width: thin; scrollbar-color: var(--border) var(--bg);
   transition: transform 0.3s ease, opacity 0.2s ease;
   transform: translateY(100%);
   opacity: 0;
@@ -380,7 +404,7 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
   opacity: 1;
 }
 #expanded-signal-panel::-webkit-scrollbar { width: 5px; }
-#expanded-signal-panel::-webkit-scrollbar-track { background: transparent; }
+#expanded-signal-panel::-webkit-scrollbar-track { background: var(--bg); }
 #expanded-signal-panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 
 .expanded-panel-header {
@@ -388,13 +412,12 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
   padding: 10px 16px 8px 16px;
   border-bottom: 1px solid var(--border);
   position: sticky; top: 0;
-  background: rgba(17,24,39,0.98); backdrop-filter: blur(16px);
+  background: rgba(10,14,23,0.98); backdrop-filter: blur(16px);
   z-index: 10;
 }
 .expanded-panel-title {
-  font-family: var(--font-data); font-size: 11px; font-weight: 600;
-  letter-spacing: 1px; text-transform: uppercase;
-  color: var(--text-secondary);
+  font-family: var(--font-heading); font-size: 13px; font-weight: 600;
+  color: var(--text-primary);
 }
 .expanded-panel-close {
   background: none; border: 1px solid var(--border); border-radius: 4px;
@@ -404,12 +427,12 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
   transition: all 0.2s;
 }
 .expanded-panel-close:hover {
-  color: var(--text-primary); border-color: rgba(255,255,255,0.3);
-  background: rgba(255,255,255,0.04);
+  color: var(--text-primary); border-color: var(--accent);
+  background: rgba(79,195,247,0.06);
 }
 
 .signal-category {
-  margin: 0; border-bottom: 1px solid rgba(255,255,255,0.03);
+  margin: 0; border-bottom: 1px solid rgba(255,255,255,0.04);
 }
 .signal-category:last-child { border-bottom: none; }
 .signal-category-header {
@@ -429,7 +452,7 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
 .signal-category-count {
   font-family: var(--font-data); font-size: 9px; font-weight: 400;
   color: var(--text-muted);
-  background: rgba(255,255,255,0.04);
+  background: rgba(255,255,255,0.05);
   padding: 1px 6px; border-radius: 3px;
 }
 .signal-category-chevron {
@@ -450,18 +473,18 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
   gap: 8px;
 }
 .expanded-signal-card {
-  background: rgba(255,255,255,0.02);
+  background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 6px;
-  padding: 8px 10px 6px 10px;
+  padding: 8px 12px 6px 12px;
   cursor: pointer;
   transition: all 0.25s;
   display: flex; flex-direction: column; justify-content: space-between;
 }
 .expanded-signal-card:hover {
-  border-color: rgba(255,255,255,0.25);
-  box-shadow: 0 0 12px rgba(255,255,255,0.04);
-  background: rgba(255,255,255,0.04);
+  border-color: var(--accent);
+  box-shadow: 0 2px 8px rgba(79,195,247,0.1);
+  background: rgba(17,24,39,0.8);
 }
 .expanded-signal-card .signal-card-header,
 .expanded-signal-card .signal-card-value-row,
@@ -473,22 +496,21 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
 /* === SIGNAL CASCADE MODAL (S.3 — PLN-014) === */
 #cascade-modal {
   display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-  z-index: 500; background: rgba(10,14,23,0.92); backdrop-filter: blur(8px);
+  z-index: 500; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px);
 }
 #cascade-modal.visible { display: flex; flex-direction: column; }
 .cascade-header {
   display: flex; align-items: center; justify-content: space-between;
   padding: 16px 28px; border-bottom: 1px solid var(--border);
-  background: rgba(17,24,39,0.95);
+  background: var(--bg);
 }
 .cascade-header h2 {
-  font-family: var(--font-data); font-size: 14px; font-weight: 600;
-  letter-spacing: 1.5px; text-transform: uppercase;
-  background: linear-gradient(90deg, var(--text-primary), var(--alert));
+  font-family: var(--font-heading); font-size: 18px; font-weight: 700;
+  background: linear-gradient(135deg, #4FC3F7, #e2e8f0);
   -webkit-background-clip: text; -webkit-text-fill-color: transparent;
 }
 .cascade-header .cascade-subtitle {
-  font-family: var(--font-data); font-size: 11px; color: var(--text-muted);
+  font-family: var(--font-ui); font-size: 11px; color: var(--text-muted);
   letter-spacing: 0.5px; margin-top: 2px;
 }
 .cascade-close {
@@ -497,13 +519,14 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
   width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
   transition: all 0.2s;
 }
-.cascade-close:hover { color: var(--text-primary); border-color: rgba(255,255,255,0.3); }
+.cascade-close:hover { color: var(--text-primary); border-color: var(--accent); }
 .cascade-body {
   flex: 1; overflow-y: auto; padding: 24px 28px 40px 28px;
-  scrollbar-width: thin; scrollbar-color: var(--border) transparent;
+  background: var(--bg);
+  scrollbar-width: thin; scrollbar-color: var(--border) var(--bg);
 }
 .cascade-body::-webkit-scrollbar { width: 5px; }
-.cascade-body::-webkit-scrollbar-track { background: transparent; }
+.cascade-body::-webkit-scrollbar-track { background: var(--bg); }
 .cascade-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 
 /* Cascade timeline */
@@ -520,7 +543,7 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
   top: 0;
   bottom: 0;
   width: 2px;
-  background: linear-gradient(180deg, var(--alert), var(--oil), var(--border));
+  background: linear-gradient(180deg, var(--accent), var(--oil), var(--border));
 }
 .cascade-event {
   position: relative;
@@ -579,26 +602,27 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
   font-family: var(--font-data); font-size: 9px; font-weight: 600;
   text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px;
 }
-/* Category colors */
-.cat-insurance { background: rgba(251,191,36,0.15); color: #fbbf24; border-color: #fbbf24; }
-.cat-maritime { background: rgba(79,195,247,0.15); color: #4FC3F7; border-color: #4FC3F7; }
-.cat-prediction { background: rgba(168,85,247,0.15); color: #a855f7; border-color: #a855f7; }
-.cat-price { background: rgba(239,68,68,0.15); color: #ef4444; border-color: #ef4444; }
-.cat-freight { background: rgba(249,115,22,0.15); color: #f97316; border-color: #f97316; }
-.cat-currency { background: rgba(99,102,241,0.15); color: #818cf8; border-color: #818cf8; }
-.cat-supply { background: rgba(255,179,71,0.15); color: #FFB347; border-color: #FFB347; }
-.cat-equities { background: rgba(34,197,94,0.15); color: #22c55e; border-color: #22c55e; }
-.cat-physical { background: rgba(148,163,184,0.15); color: #94a3b8; border-color: #94a3b8; }
+/* Category colors (dark mode) */
+.cat-insurance { background: rgba(251,191,36,0.12); color: #fbbf24; border-color: #fbbf24; }
+.cat-maritime { background: rgba(79,195,247,0.12); color: #4FC3F7; border-color: #4FC3F7; }
+.cat-prediction { background: rgba(168,85,247,0.12); color: #a855f7; border-color: #a855f7; }
+.cat-price { background: rgba(239,68,68,0.12); color: #ef4444; border-color: #ef4444; }
+.cat-freight { background: rgba(249,115,22,0.12); color: #f97316; border-color: #f97316; }
+.cat-currency { background: rgba(129,140,248,0.12); color: #818cf8; border-color: #818cf8; }
+.cat-supply { background: rgba(255,179,71,0.12); color: #FFB347; border-color: #FFB347; }
+.cat-equities { background: rgba(34,197,94,0.12); color: #22c55e; border-color: #22c55e; }
+.cat-physical { background: rgba(148,163,184,0.12); color: #94a3b8; border-color: #94a3b8; }
 
 /* Cascade detail panel (P45 commentary) */
 .cascade-detail {
   display: none;
   margin: 0 0 8px 30px;
   padding: 14px 16px;
-  background: rgba(17,24,39,0.8);
+  background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 6px;
   border-left: 3px solid;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
 }
 .cascade-event.active .cascade-detail { display: block; }
 .cascade-p45-section {
@@ -614,7 +638,7 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
   color: var(--text-secondary); line-height: 1.7;
 }
 .cascade-p45-caveat {
-  background: rgba(255,179,71,0.05); border-radius: 4px;
+  background: rgba(255,179,71,0.06); border-radius: 4px;
   padding: 8px 10px; border-left: 3px solid var(--oil);
 }
 .cascade-p45-caveat .cascade-p45-label { color: var(--oil); }
@@ -630,13 +654,13 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
 .cascade-toggle {
   display: flex; align-items: center; gap: 5px;
   padding: 4px 10px; border-radius: 4px;
-  background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+  background: rgba(255,255,255,0.03); border: 1px solid var(--border);
   cursor: pointer; font-size: 11px; font-family: var(--font-data);
   color: var(--text-secondary); transition: all 0.2s;
   user-select: none;
 }
 .cascade-toggle:hover {
-  background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.2);
+  background: rgba(79,195,247,0.06); border-color: var(--accent);
   color: var(--text-primary);
 }
 
@@ -677,7 +701,7 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
       <span class="dot" style="background:var(--lng)"></span>LNG
     </div>
     <div class="layer-toggle active" data-layer="refineries" onclick="toggleLayer(this)">
-      <span class="dot" style="background:var(--refinery-high)"></span>Refineries
+      <span class="dot" style="background:var(--alert)"></span>Refineries
     </div>
     <div class="layer-toggle" data-layer="plants" onclick="toggleLayer(this)">
       <span class="dot" style="background:var(--green)"></span>Plants
@@ -724,7 +748,7 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
 <div id="bottom-bar">
   <div class="signal-bar" id="signal-bar"></div>
   <div class="signal-bar-actions">
-    <button class="more-signals-btn" id="more-signals-btn" onclick="toggleExpandedPanel()">MORE SIGNALS &#9656;</button>
+    <button class="more-signals-btn glow-once" id="more-signals-btn" onclick="toggleExpandedPanel()">MORE SIGNALS <span class="signal-count-badge">16</span> &#9656;</button>
     <div style="display:flex;align-items:center;gap:4px">
       <button class="share-btn" onclick="copyShareLink()" title="Copy link">&#128203; Share</button>
       <button id="sources-btn" onclick="toggleSources()">Sources &#9656;</button>
@@ -1314,8 +1338,17 @@ function renderSignalCards() {
     // Confidence dot
     const confClass = s.confidence === 'H' ? 'high' : 'medium';
 
+    // Signal-to-commodity color mapping for left border
+    const signalBorderColors = {
+      brent: '#FFB347',     // oil amber
+      hormuz: '#ef4444',    // alert red
+      polymarket: '#a855f7', // prediction purple
+      war_risk: '#4FC3F7'   // maritime cyan
+    };
+
     const card = document.createElement('div');
     card.className = 'signal-card';
+    card.style.borderLeftColor = signalBorderColors[key] || 'var(--border)';
     card.onclick = () => showSignalDetail(key);
     card.innerHTML = `
       <div class="signal-card-header">
@@ -2049,8 +2082,16 @@ function toggleExpandedPanel() {
   const btn = document.getElementById('more-signals-btn');
   expandedPanelOpen = !expandedPanelOpen;
 
+  // Remove the intro glow after first interaction
+  btn.classList.remove('glow-once');
+
   if (expandedPanelOpen) {
     renderExpandedCategories();
+    // Auto-expand the first category (Freight) by default
+    const firstCat = document.getElementById('cat-freight');
+    if (firstCat && !firstCat.classList.contains('expanded')) {
+      firstCat.classList.add('expanded');
+    }
     panel.style.display = 'block';
     // Force reflow for transition
     panel.offsetHeight;
@@ -2062,7 +2103,7 @@ function toggleExpandedPanel() {
     setTimeout(() => {
       if (!expandedPanelOpen) panel.style.display = 'none';
     }, 300);
-    btn.innerHTML = 'MORE SIGNALS &#9656;';
+    btn.innerHTML = 'MORE SIGNALS <span class="signal-count-badge">16</span> &#9656;';
   }
 }
 
@@ -2259,6 +2300,14 @@ window.addEventListener('DOMContentLoaded', () => {
   renderDefaultDetail();
   renderSignalCards();
   fetchStateGeoJson();
+
+  // Remove the glow animation from MORE SIGNALS button after it plays, so it only fires once
+  const moreBtn = document.getElementById('more-signals-btn');
+  if (moreBtn) {
+    moreBtn.addEventListener('animationend', () => {
+      moreBtn.classList.remove('glow-once');
+    });
+  }
 });
 
 // State vulnerability color mapping for choropleth
@@ -2459,24 +2508,28 @@ function updateLayers() {
   const crisisLevel = window.crisisIntensity || 0;
   const hormuzDimFactor = 1.0 - (crisisLevel * 0.85); // 1.0 at day0, 0.15 at day90
 
-  // STATE CHOROPLETH — GeoJSON vulnerability overlay
-  if (layerVisibility['vulnerability'] && stateGeoJson) {
+  // STATE CHOROPLETH — GeoJSON vulnerability overlay (always rendered, opacity-toggled for smooth transition)
+  const vulnVisible = layerVisibility['vulnerability'];
+  const vulnOpacity = vulnVisible ? 1.0 : 0.0;
+  if (stateGeoJson) {
     layers.push(new deck.GeoJsonLayer({
       id: 'state-choropleth',
       data: stateGeoJson,
       filled: true,
       stroked: true,
       getFillColor: feature => getStateVulnColor(feature.properties.stname || feature.properties.NAME_1 || feature.properties.ST_NM || feature.properties.name),
-      getLineColor: [255,255,255,30],
+      getLineColor: vulnVisible ? [255,255,255,30] : [255,255,255,0],
       getLineWidth: 1,
       lineWidthMinPixels: 0.5,
-      pickable: true,
-      autoHighlight: true,
+      opacity: vulnOpacity,
+      pickable: vulnVisible,
+      autoHighlight: vulnVisible,
       highlightColor: [255,255,255,30],
       onClick: ({object}) => {
-        if (object) handleStateClick(object.properties.stname || object.properties.NAME_1 || object.properties.ST_NM || object.properties.name);
+        if (vulnVisible && object) handleStateClick(object.properties.stname || object.properties.NAME_1 || object.properties.ST_NM || object.properties.name);
       },
       onHover: (info) => {
+        if (!vulnVisible) return;
         if (info.object) {
           const tooltip = document.getElementById('map-tooltip');
           const sn = info.object.properties.stname || info.object.properties.NAME_1 || info.object.properties.ST_NM || info.object.properties.name || '';
@@ -2492,29 +2545,31 @@ function updateLayers() {
           }
         }
       },
-      updateTriggers: { getFillColor: [layerVisibility['vulnerability']] }
+      transitions: { opacity: 300 },
+      updateTriggers: { getFillColor: [vulnVisible], getLineColor: [vulnVisible], opacity: [vulnVisible] }
     }));
-  } else if (layerVisibility['vulnerability'] && !stateGeoJson) {
-    // GeoJSON fallback: render STATES as colored centroid circles
+  } else {
+    // GeoJSON fallback: render STATES as colored centroid circles (always rendered, opacity-toggled)
     layers.push(new deck.ScatterplotLayer({
       id: 'state-vulnerability-fallback',
       data: STATES,
       getPosition: d => [d.lng, d.lat],
       getRadius: 50000,
       getFillColor: d => getStateVulnColor(d.name),
-      getLineColor: [255,255,255,40],
+      getLineColor: vulnVisible ? [255,255,255,40] : [255,255,255,0],
       lineWidthMinPixels: 1,
       stroked: true,
-      opacity: 0.4,
-      pickable: true,
-      autoHighlight: true,
+      opacity: vulnVisible ? 0.4 : 0.0,
+      pickable: vulnVisible,
+      autoHighlight: vulnVisible,
       highlightColor: [255,255,255,60],
       radiusMinPixels: 12,
       radiusMaxPixels: 50,
       onClick: ({object}) => {
-        if (object) handleStateClick(object.name);
+        if (vulnVisible && object) handleStateClick(object.name);
       },
       onHover: (info) => {
+        if (!vulnVisible) return;
         if (info.object) {
           const tooltip = document.getElementById('map-tooltip');
           const match = info.object;
@@ -2526,7 +2581,9 @@ function updateLayers() {
             <div class="tt-row"><span class="tt-label">Refining</span><span class="tt-value">${match.refining_mmtpa} MMTPA</span></div>
             <div style="color:#94a3b8;margin-top:4px;font-size:10px">Click for detail</div>`;
         }
-      }
+      },
+      transitions: { opacity: 300 },
+      updateTriggers: { getLineColor: [vulnVisible], opacity: [vulnVisible] }
     }));
   }
 
@@ -2690,10 +2747,181 @@ function toggleLayer(el) {
   el.classList.toggle('active');
   layerVisibility[layer] = el.classList.contains('active');
   updateLayers();
+
+  // Context-sensitive detail panel: show commodity-specific content when exactly one commodity toggle is active
+  updateDetailForCommodity();
+
+  // Context-sensitive scroll: if expanded panel is open, scroll to relevant signal category
+  if (expandedPanelOpen && layerVisibility[layer]) {
+    const layerToCat = { 'routes-oil': 'spreads', 'routes-lng': 'freight' };
+    const targetCatId = layerToCat[layer];
+    if (targetCatId) {
+      const catEl = document.getElementById('cat-' + targetCatId);
+      if (catEl) {
+        // Expand the category if collapsed
+        if (!catEl.classList.contains('expanded')) {
+          catEl.classList.add('expanded');
+        }
+        // Scroll into view within the expanded panel
+        catEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+  }
 }
 
 function toggleSources() {
   document.getElementById('sources-panel').classList.toggle('visible');
+}
+
+// ============================================================
+// COMMODITY-SPECIFIC DETAIL PANEL (UX Fix 1)
+// When exactly one commodity toggle is active, show filtered intelligence.
+// When multiple or none, show default summary.
+// ============================================================
+function updateDetailForCommodity() {
+  // Only update if we're showing the default panel (not entity detail)
+  const defaultPanel = document.getElementById('detail-default');
+  if (!defaultPanel || defaultPanel.style.display === 'none') return;
+
+  const commodityLayers = ['routes-oil', 'routes-coal', 'routes-lng'];
+  const activeCommodities = commodityLayers.filter(l => layerVisibility[l]);
+
+  if (activeCommodities.length === 1) {
+    const commodity = activeCommodities[0].replace('routes-', '');
+    renderCommodityPanel(commodity);
+  } else {
+    renderDefaultDetail();
+  }
+}
+
+function renderCommodityPanel(commodity) {
+  const el = document.getElementById('detail-default');
+  if (!el) return;
+
+  const panels = {
+    oil: `
+      <div class="detail-section">
+        <div class="detail-title" style="font-size:16px">Oil Routes — Import Intelligence</div>
+        <div class="detail-divider" style="background:linear-gradient(90deg, var(--oil), var(--border))"></div>
+      </div>
+
+      <div class="detail-section">
+        <div class="detail-title" style="font-size:11px; color:var(--text-muted)">IMPORT DEPENDENCY</div>
+        <div class="stat-row"><span class="stat-label">Crude imported</span><span class="stat-value oil">242.4 MMT (4.84 mb/d)</span></div>
+        <div class="stat-row"><span class="stat-label">Import dependency</span><span class="stat-value alert">89%</span></div>
+      </div>
+
+      <div class="detail-section">
+        <div class="detail-title" style="font-size:11px; color:var(--text-muted)">TOP SOURCES</div>
+        <div class="stat-row"><span class="stat-label">Russia</span><span class="stat-value oil">36.3% &mdash; 87.9 MMT</span></div>
+        <div class="stat-row"><span class="stat-label">Iraq</span><span class="stat-value">20.5% &mdash; 49.7 MMT</span></div>
+        <div class="stat-row"><span class="stat-label">Saudi Arabia</span><span class="stat-value">13.0% &mdash; 31.5 MMT</span></div>
+        <div class="stat-row"><span class="stat-label">UAE</span><span class="stat-value">9.0% &mdash; 21.8 MMT</span></div>
+        <a class="source-link" href="https://ppac.gov.in/crude-oil/import" target="_blank">Source: PPAC Monthly Crude Import Data, FY 2024-25</a>
+      </div>
+
+      <div class="detail-section">
+        <div class="detail-title" style="font-size:11px; color:var(--alert)">HORMUZ EXPOSURE: 45% OF CRUDE</div>
+      </div>
+
+      <div class="detail-section">
+        <div class="detail-title" style="font-size:11px; color:var(--text-muted)">KEY SIGNALS</div>
+        <div class="stat-row"><span class="stat-label">Brent</span><span class="stat-value alert">$101.40 (+46.5%)</span></div>
+        <div class="stat-row"><span class="stat-label">Indian Basket</span><span class="stat-value alert">$147 peak</span></div>
+        <div class="stat-row"><span class="stat-label">Brent-WTI spread</span><span class="stat-value">$18</span></div>
+        <div class="stat-row"><span class="stat-label">Dubai-Brent</span><span class="stat-value">$29</span></div>
+        <a class="source-link" href="https://www.eia.gov/dnav/pet/pet_pri_spt_s1_d.htm" target="_blank">Source: EIA Petroleum Spot Prices</a>
+      </div>
+
+      <div class="detail-section">
+        <div class="detail-title" style="font-size:11px; color:var(--text-muted)">REFINERIES (by Hormuz exposure)</div>
+        <div class="stat-row" style="cursor:pointer" onclick="handleEntityClick(REFINERIES.find(r=>r.id===18),'refineries')"><span class="stat-label">MRPL Mangalore</span><span class="stat-value alert">85% &#9656;</span></div>
+        <div class="stat-row" style="cursor:pointer" onclick="handleEntityClick(REFINERIES.find(r=>r.id===11),'refineries')"><span class="stat-label">Kochi BPCL</span><span class="stat-value alert">75% &#9656;</span></div>
+        <div class="stat-row" style="cursor:pointer" onclick="handleEntityClick(REFINERIES.find(r=>r.id===4),'refineries')"><span class="stat-label">IOCL Koyali</span><span class="stat-value alert">70% &#9656;</span></div>
+        <div class="stat-row" style="cursor:pointer" onclick="handleEntityClick(REFINERIES.find(r=>r.id===6),'refineries')"><span class="stat-label">IOCL Mathura</span><span class="stat-value">70% &#9656;</span></div>
+        <div style="font-family:var(--font-data);font-size:10px;color:var(--text-muted);margin-top:6px;font-style:italic">Click any refinery for full source mix detail</div>
+      </div>
+    `,
+    lng: `
+      <div class="detail-section">
+        <div class="detail-title" style="font-size:16px">LNG Routes — Import Intelligence</div>
+        <div class="detail-divider" style="background:linear-gradient(90deg, var(--lng), var(--border))"></div>
+      </div>
+
+      <div class="detail-section">
+        <div class="detail-title" style="font-size:11px; color:var(--text-muted)">IMPORT DEPENDENCY</div>
+        <div class="stat-row"><span class="stat-label">LNG imported</span><span class="stat-value lng">~35 MMTPA</span></div>
+        <div class="stat-row"><span class="stat-label">Import dependency</span><span class="stat-value alert">50%</span></div>
+      </div>
+
+      <div class="detail-section">
+        <div class="detail-title" style="font-size:11px; color:var(--text-muted)">TOP SOURCES</div>
+        <div class="stat-row"><span class="stat-label">Qatar</span><span class="stat-value lng">~50% &mdash; Ras Laffan</span></div>
+        <div class="stat-row"><span class="stat-label">USA</span><span class="stat-value">~12% &mdash; Sabine Pass</span></div>
+        <div class="stat-row"><span class="stat-label">Australia</span><span class="stat-value">~8% &mdash; Gladstone</span></div>
+        <a class="source-link" href="https://ppac.gov.in/natural-gas/import" target="_blank">Source: PPAC LNG Imports, FY 2024-25</a>
+      </div>
+
+      <div class="detail-section">
+        <div class="detail-title" style="font-size:11px; color:var(--alert)">HORMUZ EXPOSURE: 60% OF LNG</div>
+      </div>
+
+      <div class="detail-section">
+        <div class="detail-title" style="font-size:11px; color:var(--text-muted)">KEY SIGNALS</div>
+        <div class="stat-row"><span class="stat-label">JKM LNG</span><span class="stat-value alert">$25.39/MMBtu (+137%)</span></div>
+        <div class="stat-row"><span class="stat-label">Ras Laffan</span><span class="stat-value alert">17% capacity loss</span></div>
+        <a class="source-link" href="https://www.eia.gov/dnav/pet/pet_pri_spt_s1_d.htm" target="_blank">Source: EIA, ICE Futures</a>
+      </div>
+
+      <div class="detail-section">
+        <div class="detail-title" style="font-size:11px; color:var(--text-muted)">TERMINALS</div>
+        <div class="stat-row"><span class="stat-label">Dahej</span><span class="stat-value lng">17.5 MMTPA</span></div>
+        <div class="stat-row"><span class="stat-label">Hazira</span><span class="stat-value">5.0 MMTPA</span></div>
+        <div class="stat-row"><span class="stat-label">Kochi</span><span class="stat-value">5.0 MMTPA</span></div>
+        <div class="stat-row"><span class="stat-label">Dabhol</span><span class="stat-value">5.0 MMTPA</span></div>
+        <div class="stat-row"><span class="stat-label">Ennore</span><span class="stat-value">5.0 MMTPA</span></div>
+        <a class="source-link" href="https://ppac.gov.in/natural-gas/import" target="_blank">Source: PPAC LNG Infrastructure Data</a>
+      </div>
+    `,
+    coal: `
+      <div class="detail-section">
+        <div class="detail-title" style="font-size:16px">Coal Routes — Import Intelligence</div>
+        <div class="detail-divider" style="background:linear-gradient(90deg, var(--coal), var(--border))"></div>
+      </div>
+
+      <div class="detail-section">
+        <div class="detail-title" style="font-size:11px; color:var(--text-muted)">IMPORT DEPENDENCY</div>
+        <div class="stat-row"><span class="stat-label">Coal imported</span><span class="stat-value">263.6 MMT</span></div>
+        <div class="stat-row"><span class="stat-label">Import dependency</span><span class="stat-value green">27% (73% domestic)</span></div>
+      </div>
+
+      <div class="detail-section">
+        <div class="detail-title" style="font-size:11px; color:var(--text-muted)">TOP SOURCES</div>
+        <div class="stat-row"><span class="stat-label">Indonesia</span><span class="stat-value">60% &mdash; Kalimantan</span></div>
+        <div class="stat-row"><span class="stat-label">South Africa</span><span class="stat-value">14% &mdash; Richards Bay</span></div>
+        <div class="stat-row"><span class="stat-label">Australia</span><span class="stat-value">10% &mdash; Newcastle</span></div>
+        <a class="source-link" href="https://ppac.gov.in/import-export" target="_blank">Source: PPAC, DGCI&S, FY 2024-25</a>
+      </div>
+
+      <div class="detail-section">
+        <div class="detail-title" style="font-size:11px; color:var(--green)">HORMUZ EXPOSURE: 0%</div>
+        <div style="font-family:var(--font-data);font-size:11px;color:var(--text-secondary);line-height:1.7;margin-top:6px;padding:8px 10px;background:rgba(34,197,94,0.06);border-radius:4px;border-left:3px solid var(--green)">
+          Coal routes transit Malacca Strait or take direct Indian Ocean routes. Not affected by the Hormuz crisis. This is India's energy resilience layer.
+        </div>
+      </div>
+
+      <div class="detail-section">
+        <div class="detail-title" style="font-size:11px; color:var(--text-muted)">TOP PORTS</div>
+        <div class="stat-row"><span class="stat-label">Paradip</span><span class="stat-value">30 MMTPA</span></div>
+        <div class="stat-row"><span class="stat-label">Mundra</span><span class="stat-value">25 MMTPA</span></div>
+        <div class="stat-row"><span class="stat-label">Dhamra</span><span class="stat-value">20 MMTPA</span></div>
+        <div class="stat-row"><span class="stat-label">Haldia</span><span class="stat-value">20 MMTPA</span></div>
+        <a class="source-link" href="https://ppac.gov.in/import-export" target="_blank">Source: PPAC, Port Authority Data</a>
+      </div>
+    `
+  };
+
+  el.innerHTML = panels[commodity] || '';
 }
 
 function handleEntityClick(obj, layerId) {
@@ -2709,6 +2937,8 @@ function clearSelection() {
   selectedEntity = null;
   document.getElementById('detail-default').style.display = 'block';
   document.getElementById('detail-entity').style.display = 'none';
+  // Refresh to commodity-aware state
+  renderDefaultPanel();
 }
 
 function showEntityPanel(html) {
@@ -2768,8 +2998,14 @@ function renderDefaultDetail() {
   const el = document.getElementById('detail-default');
   el.innerHTML = `
     <div class="detail-section">
-      <div class="detail-title">India's Energy Nervous System</div>
+      <div class="detail-title" style="font-size:16px">India's Energy Nervous System</div>
       <div class="detail-divider"></div>
+    </div>
+
+    <div class="detail-section">
+      <div class="detail-title" style="font-size:11px; color:var(--alert)">CRISIS STATUS &mdash; ${getCrisisStatsForDay(selectedCascadeDay).label}</div>
+      ${getCrisisStatsHTML(selectedCascadeDay)}
+      <a class="source-link" href="https://portwatch.imf.org/pages/chokepoint6" target="_blank">Source: IMF PortWatch, PPAC, EIA, IEA Oil Market Report</a>
     </div>
 
     <div class="detail-section">
@@ -2830,48 +3066,10 @@ function renderDefaultDetail() {
     </div>
 
     <div class="detail-section">
-      <div class="detail-title" style="font-size:11px; color:var(--text-muted)">HORMUZ EXPOSURE</div>
-      <div class="stat-row">
-        <span class="stat-label">Crude</span>
-        <span class="stat-value alert">45% via Hormuz</span>
+      <div class="detail-title" style="font-size:11px; color:var(--text-muted)">SIGNALS (4)</div>
+      <div style="font-family:var(--font-data);font-size:11px;color:var(--text-secondary);line-height:1.6">
+        Click signal cards in the bottom bar for P45 analysis
       </div>
-      <div class="stat-row">
-        <span class="stat-label">LNG</span>
-        <span class="stat-value alert">60% via Hormuz</span>
-      </div>
-      <div class="stat-row">
-        <span class="stat-label">LPG</span>
-        <span class="stat-value alert">90% via Hormuz</span>
-      </div>
-      <a class="source-link" href="https://ppac.gov.in/import-export" target="_blank">Source: PPAC Import/Export Data; chokepoint exposure derived from route analysis</a>
-      ${!stateGeoJson && layerVisibility['vulnerability'] ? '<div class="geojson-fallback-note">State boundaries: approximate positions (GeoJSON unavailable)</div>' : ''}
-    </div>
-
-    <div class="detail-section">
-      <div class="detail-title" style="font-size:11px; color:var(--text-muted)">CRISIS STATUS &mdash; ${getCrisisStatsForDay(selectedCascadeDay).label}</div>
-      ${getCrisisStatsHTML(selectedCascadeDay)}
-      <a class="source-link" href="https://portwatch.imf.org/pages/chokepoint6" target="_blank">Source: IMF PortWatch, PPAC, EIA, IEA Oil Market Report</a>
-    </div>
-
-    <div class="detail-section">
-      <div class="detail-title" style="font-size:11px; color:var(--text-muted)">GRID</div>
-      <div class="stat-row">
-        <span class="stat-label">Total capacity</span>
-        <span class="stat-value green">505.9 GW</span>
-      </div>
-      <div class="stat-row">
-        <span class="stat-label">Coal generation</span>
-        <span class="stat-value">74.5% of total</span>
-      </div>
-      <div class="stat-row">
-        <span class="stat-label">Solar capacity</span>
-        <span class="stat-value green">97.4 GW (+34% YoY)</span>
-      </div>
-      <div class="stat-row">
-        <span class="stat-label">Total generation</span>
-        <span class="stat-value">2,036.5 TWh</span>
-      </div>
-      <a class="source-link" href="https://ember-energy.org/data/yearly-electricity-data/" target="_blank">Source: Ember Energy, 2024</a>
     </div>
 
     <div class="detail-section">
@@ -2893,6 +3091,17 @@ function renderDefaultDetail() {
         <span class="stat-value" style="color:var(--text-muted)">90 days</span>
       </div>
       <a class="source-link" href="https://isprl.co.in/" target="_blank">Source: ISPRL (Strategic Petroleum Reserves), PPAC, PIB</a>
+    </div>
+
+    <div class="detail-section" style="background:rgba(79,195,247,0.04);border-radius:6px;padding:12px 14px;border:1px solid rgba(79,195,247,0.12)">
+      <div class="detail-title" style="font-size:11px; color:var(--accent)">EXPLORE</div>
+      <div style="font-family:var(--font-data);font-size:11px;color:var(--text-secondary);line-height:1.8">
+        &#8226; Click a <span style="color:var(--text-primary)">refinery</span> on the map for source mix detail<br>
+        &#8226; Toggle <span style="color:var(--oil)">Oil</span> / <span style="color:var(--coal)">Coal</span> / <span style="color:var(--lng)">LNG</span> for filtered commodity view<br>
+        &#8226; Use the <span style="color:var(--text-primary)">timeline</span> to see the crisis unfold<br>
+        &#8226; Click <span style="color:var(--accent)">"Signal Cascade"</span> for propagation analysis<br>
+        &#8226; Click <span style="color:var(--alert)">vulnerability overlays</span> for state-level exposure
+      </div>
     </div>
 
     <div class="detail-section">
@@ -2975,7 +3184,15 @@ function renderDefaultPanel() {
   // Only refresh if the default panel is visible (not in entity detail view)
   const defaultPanel = document.getElementById('detail-default');
   if (defaultPanel && defaultPanel.style.display !== 'none') {
-    renderDefaultDetail();
+    // Check if exactly one commodity toggle is active
+    const commodityLayers = ['routes-oil', 'routes-coal', 'routes-lng'];
+    const activeCommodities = commodityLayers.filter(l => layerVisibility[l]);
+    if (activeCommodities.length === 1) {
+      const commodity = activeCommodities[0].replace('routes-', '');
+      renderCommodityPanel(commodity);
+    } else {
+      renderDefaultDetail();
+    }
   }
 }
 
