@@ -359,6 +359,176 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
   100% { transform: scale(2.5); opacity: 0; }
 }
 
+/* === SIGNAL CASCADE MODAL (S.3 — PLN-014) === */
+#cascade-modal {
+  display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  z-index: 500; background: rgba(10,14,23,0.92); backdrop-filter: blur(8px);
+}
+#cascade-modal.visible { display: flex; flex-direction: column; }
+.cascade-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 28px; border-bottom: 1px solid var(--border);
+  background: rgba(17,24,39,0.95);
+}
+.cascade-header h2 {
+  font-family: var(--font-data); font-size: 14px; font-weight: 600;
+  letter-spacing: 1.5px; text-transform: uppercase;
+  background: linear-gradient(90deg, var(--text-primary), var(--alert));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.cascade-header .cascade-subtitle {
+  font-family: var(--font-data); font-size: 11px; color: var(--text-muted);
+  letter-spacing: 0.5px; margin-top: 2px;
+}
+.cascade-close {
+  background: none; border: 1px solid var(--border); border-radius: 4px;
+  color: var(--text-secondary); cursor: pointer; font-size: 18px;
+  width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s;
+}
+.cascade-close:hover { color: var(--text-primary); border-color: rgba(255,255,255,0.3); }
+.cascade-body {
+  flex: 1; overflow-y: auto; padding: 24px 28px 40px 28px;
+  scrollbar-width: thin; scrollbar-color: var(--border) transparent;
+}
+.cascade-body::-webkit-scrollbar { width: 5px; }
+.cascade-body::-webkit-scrollbar-track { background: transparent; }
+.cascade-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+/* Cascade timeline */
+.cascade-timeline {
+  position: relative;
+  padding-left: 160px;
+  max-width: 960px;
+  margin: 0 auto;
+}
+.cascade-timeline::before {
+  content: '';
+  position: absolute;
+  left: 148px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: linear-gradient(180deg, var(--alert), var(--oil), var(--border));
+}
+.cascade-event {
+  position: relative;
+  margin-bottom: 4px;
+  cursor: pointer;
+}
+.cascade-event-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 10px 14px;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+.cascade-event-header:hover {
+  background: rgba(255,255,255,0.03);
+}
+.cascade-event.active .cascade-event-header {
+  background: rgba(255,255,255,0.04);
+}
+.cascade-time-col {
+  position: absolute;
+  left: -160px;
+  width: 140px;
+  text-align: right;
+  padding-top: 10px;
+}
+.cascade-time-date {
+  font-family: var(--font-data); font-size: 11px; font-weight: 600;
+  color: var(--text-primary); letter-spacing: 0.5px;
+}
+.cascade-time-lead {
+  font-family: var(--font-data); font-size: 9px;
+  color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;
+  margin-top: 2px;
+}
+.cascade-marker {
+  width: 14px; height: 14px; border-radius: 50%;
+  border: 2px solid; flex-shrink: 0; margin-top: 3px;
+  position: relative; z-index: 1;
+  transition: transform 0.2s;
+}
+.cascade-event:hover .cascade-marker,
+.cascade-event.active .cascade-marker { transform: scale(1.3); }
+.cascade-event-info { flex: 1; min-width: 0; }
+.cascade-event-name {
+  font-family: var(--font-data); font-size: 12px; font-weight: 600;
+  color: var(--text-primary); letter-spacing: 0.5px; text-transform: uppercase;
+}
+.cascade-event-value {
+  font-family: var(--font-data); font-size: 12px; font-weight: 700;
+  margin-top: 2px;
+}
+.cascade-event-tag {
+  display: inline-block; padding: 1px 6px; border-radius: 3px;
+  font-family: var(--font-data); font-size: 9px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px;
+}
+/* Category colors */
+.cat-insurance { background: rgba(251,191,36,0.15); color: #fbbf24; border-color: #fbbf24; }
+.cat-maritime { background: rgba(79,195,247,0.15); color: #4FC3F7; border-color: #4FC3F7; }
+.cat-prediction { background: rgba(168,85,247,0.15); color: #a855f7; border-color: #a855f7; }
+.cat-price { background: rgba(239,68,68,0.15); color: #ef4444; border-color: #ef4444; }
+.cat-freight { background: rgba(249,115,22,0.15); color: #f97316; border-color: #f97316; }
+.cat-currency { background: rgba(99,102,241,0.15); color: #818cf8; border-color: #818cf8; }
+.cat-supply { background: rgba(255,179,71,0.15); color: #FFB347; border-color: #FFB347; }
+.cat-equities { background: rgba(34,197,94,0.15); color: #22c55e; border-color: #22c55e; }
+.cat-physical { background: rgba(148,163,184,0.15); color: #94a3b8; border-color: #94a3b8; }
+
+/* Cascade detail panel (P45 commentary) */
+.cascade-detail {
+  display: none;
+  margin: 0 0 8px 30px;
+  padding: 14px 16px;
+  background: rgba(17,24,39,0.8);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  border-left: 3px solid;
+}
+.cascade-event.active .cascade-detail { display: block; }
+.cascade-p45-section {
+  margin-bottom: 10px;
+}
+.cascade-p45-label {
+  font-family: var(--font-data); font-size: 9px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 1px;
+  color: var(--text-muted); margin-bottom: 3px;
+}
+.cascade-p45-text {
+  font-family: var(--font-data); font-size: 11px;
+  color: var(--text-secondary); line-height: 1.7;
+}
+.cascade-p45-caveat {
+  background: rgba(255,179,71,0.05); border-radius: 4px;
+  padding: 8px 10px; border-left: 3px solid var(--oil);
+}
+.cascade-p45-caveat .cascade-p45-label { color: var(--oil); }
+.cascade-p45-caveat .cascade-p45-text { font-style: italic; }
+.cascade-p45-conf {
+  display: inline-flex; align-items: center; gap: 3px;
+  font-family: var(--font-data); font-size: 9px; font-weight: 600;
+  color: var(--text-muted); margin-left: 6px;
+}
+.cascade-p45-conf .conf-dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
+
+/* Cascade toggle button */
+.cascade-toggle {
+  display: flex; align-items: center; gap: 5px;
+  padding: 4px 10px; border-radius: 4px;
+  background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+  cursor: pointer; font-size: 11px; font-family: var(--font-data);
+  color: var(--text-secondary); transition: all 0.2s;
+  user-select: none;
+}
+.cascade-toggle:hover {
+  background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.2);
+  color: var(--text-primary);
+}
+
 /* Responsive */
 @media (max-width: 1200px) {
   #app { grid-template-columns: 1fr; grid-template-rows: 56px 50vh 1fr auto; }
@@ -366,6 +536,14 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
   #detail-panel { grid-column: 1; grid-row: 3; max-height: 50vh; }
   #bottom-bar { grid-row: 4; flex-wrap: wrap; min-height: auto; }
   .signal-card { min-width: 140px; }
+  .cascade-toggle { display: none; }
+}
+@media (max-width: 768px) {
+  .cascade-timeline { padding-left: 20px; }
+  .cascade-timeline::before { left: 8px; }
+  .cascade-time-col { position: static; width: auto; text-align: left; padding-top: 0; margin-bottom: 4px; }
+  .cascade-body { padding: 16px 12px 32px 12px; }
+  .cascade-header { padding: 12px 16px; }
 }
 </style>
 </head>
@@ -394,6 +572,9 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
     <div class="layer-toggle active" data-layer="vulnerability" onclick="toggleLayer(this)">
       <span class="dot" style="background:var(--alert)"></span>Vulnerability
     </div>
+  </div>
+  <div class="cascade-toggle" onclick="openCascadeModal()" title="View how the crisis propagated across signal domains">
+    Signal Cascade
   </div>
   <div class="header-timeline">
     <span class="timeline-label">CRISIS TIMELINE</span>
@@ -435,6 +616,20 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
       <button class="share-btn" onclick="copyShareLink()" title="Copy link">&#128203; Share</button>
       <button id="sources-btn" onclick="toggleSources()">Sources &#9656;</button>
     </div>
+  </div>
+</div>
+
+<!-- SIGNAL CASCADE MODAL (S.3 — PLN-014) -->
+<div id="cascade-modal">
+  <div class="cascade-header">
+    <div>
+      <h2>Signal Cascade</h2>
+      <div class="cascade-subtitle">How the Hormuz crisis propagated across signal domains &mdash; Feb 28 to Apr 2, 2026</div>
+    </div>
+    <button class="cascade-close" onclick="closeCascadeModal()" title="Close (Esc)">&times;</button>
+  </div>
+  <div class="cascade-body">
+    <div id="cascade-timeline-container"></div>
   </div>
 </div>
 
@@ -2037,6 +2232,376 @@ function renderPortDetail(p) {
     ${p.highlight ? `<div style="font-family:var(--font-data);font-size:11px;color:var(--text-secondary);line-height:1.6;margin-top:8px">${p.highlight}</div>` : ''}
     <a class="source-link" href="https://ppac.gov.in/infrastructure/installed-refinery-capacity" target="_blank">Source: PPAC, India Ports Association</a>
   `);
+}
+
+// ============================================================
+// SIGNAL CASCADE VISUALIZATION (S.3 — PLN-014)
+// 10 events showing HOW the Hormuz crisis propagated through
+// different signal domains, in what ORDER, and with what lead time.
+// This is the unique intellectual contribution of BLD-004.
+// ============================================================
+
+const CASCADE_EVENTS = [
+  {
+    id: 'war_risk_premium',
+    name: 'War Risk Premium',
+    category: 'insurance',
+    catLabel: 'INSURANCE',
+    catClass: 'cat-insurance',
+    date: 'FEB 28',
+    dateLabel: 'Feb 28, 2026',
+    leadTime: 'Hours',
+    leadOrder: 0,
+    value: '0.25% \u2192 1.0%',
+    valueDetail: 'AWRP spiked from 0.25% to 1.0% within hours; reached 2.5-3.0% by Mar 5',
+    p45: {
+      observation: 'Premium spiked from 0.25% to 1.0% within hours of Op Epic Fury. By Mar 5 it reached 2.5-3.0%. VLCC voyage premium went from ~$300K to $2-3M.',
+      observation_conf: 'H',
+      context: 'When war risk exceeds ~1% of hull value, the cost of Hormuz transit exceeds the savings vs. Cape route for most cargo. This is the economic tipping point that converts military action into commercial shutdown.',
+      commentary: 'Insurance moved first because underwriters reprice binary risk in real-time. The insurance market effectively closed the strait 5 days before the formal P&I cancellation. Premiums are the fastest-moving signal in the cascade.',
+      commentary_conf: 'M',
+      caveat: 'We are not insurance specialists. Premium thresholds vary by vessel age, cargo value, and insurer. Our values are from Lloyd\'s List reports with 1-3 day delay.',
+      source: 'Lloyd\'s List, JWC'
+    }
+  },
+  {
+    id: 'ais_vessel_gaps',
+    name: 'AIS Vessel Gaps',
+    category: 'maritime',
+    catLabel: 'MARITIME',
+    catClass: 'cat-maritime',
+    date: 'FEB 28-MAR 1',
+    dateLabel: 'Feb 28 \u2013 Mar 1, 2026',
+    leadTime: '12 hours',
+    leadOrder: 0.5,
+    value: 'Ships went dark',
+    valueDetail: 'Vessels near Hormuz turned off AIS transponders within 12 hours of strikes',
+    p45: {
+      observation: 'Ships approaching Hormuz began switching off AIS transponders within 12 hours. IMF PortWatch recorded a 70% traffic drop on the first day. Vessel tracking showed "dark zones" near the strait.',
+      observation_conf: 'H',
+      context: 'AIS is the maritime equivalent of aircraft transponders. Ships go dark when masters perceive imminent danger or when ordered by insurers/charterers. It is the physical confirmation of the insurance signal.',
+      commentary: 'AIS gaps are the second-fastest signal because they represent real-time decisions by ship masters who are physically near the threat. Unlike insurance (which reprices remotely), this requires humans on ships to act.',
+      commentary_conf: 'M',
+      caveat: 'AIS can be spoofed or selectively disabled. Some vessels may have gone dark for reasons unrelated to the crisis. PortWatch data updates weekly.',
+      source: 'IMF PortWatch, aisstream.io'
+    }
+  },
+  {
+    id: 'polymarket_odds',
+    name: 'Polymarket Odds',
+    category: 'prediction',
+    catLabel: 'PREDICTION',
+    catClass: 'cat-prediction',
+    date: 'MAR 1-2',
+    dateLabel: 'Mar 1 \u2013 2, 2026',
+    leadTime: '1-2 days',
+    leadOrder: 1.5,
+    value: '~50% \u2192 30%',
+    valueDetail: 'Normalization odds dropped from ~50% to 30% within 36 hours of the strikes',
+    p45: {
+      observation: 'Polymarket\'s Hormuz normalization contract dropped from ~50% to 30% within 36 hours. By Day 30 it was at 17.5%. Volume surged to $2.3M, indicating genuine information aggregation.',
+      observation_conf: 'H',
+      context: 'Prediction markets aggregate dispersed information from traders with shipping, military, and diplomatic knowledge. The price movement represents a consensus shift from "maybe recoverable" to "probably prolonged."',
+      commentary: 'Prediction markets moved third because they require the crowd to process and synthesize multiple signals (insurance spike, AIS gaps, news) into a single probability. This synthesis takes 24-36 hours.',
+      commentary_conf: 'M',
+      caveat: 'Polymarket can be illiquid and manipulated. Low-volume contracts are noisy. This is crowd sentiment, not a forecast.',
+      source: 'Polymarket'
+    }
+  },
+  {
+    id: 'pi_cancellation',
+    name: 'P&I Cancellation',
+    category: 'insurance',
+    catLabel: 'INSURANCE',
+    catClass: 'cat-insurance',
+    date: 'MAR 5',
+    dateLabel: 'Mar 5, 2026',
+    leadTime: 'Day 5',
+    leadOrder: 5,
+    value: 'All carriers suspended',
+    valueDetail: 'All major P&I clubs cancelled war-risk coverage. Maersk, CMA CGM, MSC, Hapag-Lloyd suspended Hormuz transit.',
+    p45: {
+      observation: 'All major P&I clubs (Gard, Skuld, NorthStandard, London P&I, American Club) issued cancellation notices. Maersk, CMA CGM, MSC, Hapag-Lloyd suspended Hormuz transit entirely.',
+      observation_conf: 'H',
+      context: 'Without P&I coverage, vessels cannot legally operate in most jurisdictions. This is the formal mechanism that converts a military threat into a commercial shutdown. Individual ships might transit, but the global commercial fleet was locked out.',
+      commentary: 'This was the point of no return. The P&I cancellation formalized what the premium spike had already signaled: the strait was commercially closed. The 5-day delay represents the administrative process of issuing formal cancellation notices.',
+      commentary_conf: 'H',
+      caveat: 'Some vessels with state-backed insurance (Iranian, possibly Chinese) continued transit. The cancellation affected commercial Western-insured vessels.',
+      source: 'Lloyd\'s List, IMF PortWatch'
+    }
+  },
+  {
+    id: 'lpg_rationing',
+    name: 'LPG Rationing',
+    category: 'physical',
+    catLabel: 'PHYSICAL',
+    catClass: 'cat-physical',
+    date: 'MAR 7',
+    dateLabel: 'Mar 7, 2026',
+    leadTime: 'Day 7',
+    leadOrder: 7,
+    value: 'Essential Commodities Act invoked',
+    valueDetail: '90% of LPG imports blocked. Commercial allocation cut 80%. 12,000 raids under ECA.',
+    p45: {
+      observation: '90% of India\'s LPG imports were blocked at Hormuz. Commercial LPG allocation cut up to 80%. Essential Commodities Act invoked. 12,000 raids conducted against hoarding.',
+      observation_conf: 'H',
+      context: 'India imports 90% of its LPG via Hormuz \u2014 the highest single-chokepoint dependency in its energy mix. Unlike crude (where Russia can substitute), there is no alternative LPG supplier at this scale.',
+      commentary: 'LPG was the first physical commodity to hit crisis because of the 90% Hormuz dependency. This is where the crisis stopped being abstract (insurance premiums, market odds) and became tangible (cooking fuel rationing for 300M+ households).',
+      commentary_conf: 'H',
+      caveat: 'Rationing severity varies by state and urban/rural divide. Government statements may understate actual shortage levels.',
+      source: 'PPAC, PIB, Ministry of Consumer Affairs'
+    }
+  },
+  {
+    id: 'brent_peak',
+    name: 'Brent Crude Peak',
+    category: 'price',
+    catLabel: 'PRICE',
+    catClass: 'cat-price',
+    date: 'MAR 8',
+    dateLabel: 'Mar 8, 2026',
+    leadTime: 'Day 8',
+    leadOrder: 8,
+    value: '$126/bbl',
+    valueDetail: 'Brent hit $126/bbl \u2014 82% above pre-crisis $69. Indian basket hit $146/bbl.',
+    p45: {
+      observation: 'Brent hit $126/bbl, up 82% from pre-crisis $69. Indian basket crude reached $146/bbl. Dubai crude hit an all-time record of $166/bbl due to India-specific supply stress.',
+      observation_conf: 'H',
+      context: 'Oil markets price expected future supply/demand. The $126 peak reflects maximum uncertainty about duration and severity. The Brent-Indian basket spread widening to $50+ is uniquely Indian.',
+      commentary: 'Price peaked on Day 8 \u2014 not Day 1 \u2014 because markets initially expected diplomatic resolution. The decline to ~$101 by Day 30 suggests markets are pricing prolonged-but-adaptable disruption, not permanent closure.',
+      commentary_conf: 'M',
+      caveat: 'We are not oil traders. Price forecasting is outside our competence. This is observational data from EIA.',
+      source: 'EIA Petroleum Spot Prices'
+    }
+  },
+  {
+    id: 'container_rates',
+    name: 'Container Rates',
+    category: 'freight',
+    catLabel: 'FREIGHT',
+    catClass: 'cat-freight',
+    date: 'MAR 10-15',
+    dateLabel: 'Mar 10 \u2013 15, 2026',
+    leadTime: 'Day 10-15',
+    leadOrder: 12,
+    value: '+150%',
+    valueDetail: 'Container rates up 150% as ships rerouted via Cape of Good Hope. Hapag-Lloyd surcharge: $3,500/container.',
+    p45: {
+      observation: 'Container freight rates surged 150% as global shipping rerouted via Cape of Good Hope. Hapag-Lloyd imposed a $3,500/container war surcharge. Cape route traffic up 45%.',
+      observation_conf: 'H',
+      context: 'The Cape reroute adds 10-14 days and ~$1M per voyage in fuel costs for a large container ship. This cost propagates to every imported good, not just energy \u2014 fertilizers, chemicals, manufactured goods.',
+      commentary: 'Freight rates moved after price because rerouting decisions take days to execute. Ships mid-voyage had to physically change course, and the Cape capacity constraint took 10-15 days to become visible in rate data.',
+      commentary_conf: 'M',
+      caveat: 'Freight rate data varies by index (BDTI, WCI, Freightos). Our figures are indicative averages, not specific contract rates.',
+      source: 'Lloyd\'s List, Freightos Baltic Index'
+    }
+  },
+  {
+    id: 'inr_depreciation',
+    name: 'INR Depreciation',
+    category: 'currency',
+    catLabel: 'CURRENCY',
+    catClass: 'cat-currency',
+    date: 'MAR 23',
+    dateLabel: 'Mar 23, 2026',
+    leadTime: 'Day 23',
+    leadOrder: 23,
+    value: '\u20B993.94/USD',
+    valueDetail: 'INR hit 93.94/USD \u2014 7.2% depreciation from pre-crisis. RBI intervention intensified.',
+    p45: {
+      observation: 'INR depreciated to 93.94/USD, down 7.2% from pre-crisis levels. RBI forex reserves draw-down accelerated. Current account deficit projected to widen significantly.',
+      observation_conf: 'H',
+      context: 'India\'s oil import bill was ~$175B pre-crisis. A 46% crude price increase plus 7% currency depreciation compounds to a ~56% increase in rupee-denominated import costs. This is a macro shock.',
+      commentary: 'Currency moved on Day 23 because forex markets price the cumulative trade deficit impact, which takes weeks to quantify. The RBI initially defended the rate; the depreciation represents exhaustion of that defense.',
+      commentary_conf: 'M',
+      caveat: 'Currency movements reflect multiple factors beyond the Hormuz crisis (US Fed policy, global risk appetite). We cannot isolate the Hormuz-specific component precisely.',
+      source: 'RBI, Bloomberg'
+    }
+  },
+  {
+    id: 'equity_divergence',
+    name: 'ONGC/HPCL Divergence',
+    category: 'equities',
+    catLabel: 'EQUITIES',
+    catClass: 'cat-equities',
+    date: 'MAR 28',
+    dateLabel: 'Mar 28, 2026',
+    leadTime: 'Day 28',
+    leadOrder: 28,
+    value: 'ONGC +7%, HPCL -25%',
+    valueDetail: 'Upstream (ONGC) gained on higher realization; downstream (HPCL) collapsed on margin squeeze.',
+    p45: {
+      observation: 'ONGC rose ~7% (higher crude realization benefits upstream producers). HPCL fell ~25% (refiners absorb higher input costs with capped output prices). IOC and BPCL also fell 15-20%.',
+      observation_conf: 'H',
+      context: 'In India, upstream producers (ONGC, Oil India) benefit from higher crude prices, while downstream refiners/marketers (HPCL, IOC, BPCL) are squeezed because the government caps retail fuel prices.',
+      commentary: 'Equities moved last because stock prices aggregate all other signals through the slowest mechanism: quarterly earnings expectations. The ONGC/HPCL divergence is a pure signal of Hormuz exposure difference.',
+      commentary_conf: 'M',
+      caveat: 'Stock prices reflect many factors beyond Hormuz. Sector rotation, global equity sentiment, and RBI policy all contribute. The divergence pattern is directionally correct but magnitude may vary.',
+      source: 'NSE, BSE'
+    }
+  },
+  {
+    id: 'russia_crude_surge',
+    name: 'Russia Crude Surge',
+    category: 'supply',
+    catLabel: 'SUPPLY SHIFT',
+    catClass: 'cat-supply',
+    date: 'MAR 30',
+    dateLabel: 'Mar 30, 2026',
+    leadTime: 'Day 30',
+    leadOrder: 30,
+    value: '20% \u2192 45%',
+    valueDetail: 'Russia\'s share of India\'s crude imports surged from 20% to 45% as Gulf supplies collapsed.',
+    p45: {
+      observation: 'Russia\'s share of India\'s crude imports surged from 20.1% (Feb) to 45.2% (Mar). Iraq collapsed -75.2%. Saudi fell -43%. Venezuela surged +329%. 70% of crude now routed outside Hormuz.',
+      observation_conf: 'H',
+      context: 'India\'s refineries need ~5 mb/d of crude regardless of source. When Hormuz closed, procurement teams pivoted to the only large-scale alternative: Russian crude via Baltic and Pacific routes (42-day transit vs. 6-day Gulf).',
+      commentary: 'The supply restructuring took 30 days because tankers from Russia take 35-50 days to arrive. This is the physical lag of the global energy system \u2014 you can reprice in hours but you cannot reroute a VLCC in hours.',
+      commentary_conf: 'H',
+      caveat: 'Russia share data comes from PPAC monthly reports with ~30 day lag. March data is preliminary. The long-term sustainability of 45%+ Russia dependence is geopolitically uncertain.',
+      source: 'PPAC Monthly Crude Import Data'
+    }
+  }
+];
+
+function openCascadeModal() {
+  const modal = document.getElementById('cascade-modal');
+  modal.classList.add('visible');
+  renderCascadeTimeline();
+  document.body.style.overflow = 'hidden';
+}
+
+function closeCascadeModal() {
+  const modal = document.getElementById('cascade-modal');
+  modal.classList.remove('visible');
+  document.body.style.overflow = '';
+}
+
+// Close on Escape key
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    const modal = document.getElementById('cascade-modal');
+    if (modal.classList.contains('visible')) {
+      closeCascadeModal();
+    }
+  }
+});
+
+// Close on backdrop click
+document.addEventListener('click', (e) => {
+  const modal = document.getElementById('cascade-modal');
+  if (e.target === modal) {
+    closeCascadeModal();
+  }
+});
+
+function toggleCascadeEvent(id) {
+  const el = document.getElementById('cascade-ev-' + id);
+  if (!el) return;
+  const wasActive = el.classList.contains('active');
+  // Close all
+  document.querySelectorAll('.cascade-event.active').forEach(ev => ev.classList.remove('active'));
+  // Toggle this one
+  if (!wasActive) {
+    el.classList.add('active');
+    // Scroll into view
+    const detail = el.querySelector('.cascade-detail');
+    if (detail) {
+      setTimeout(() => detail.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
+    }
+  }
+}
+
+function renderCascadeTimeline() {
+  const container = document.getElementById('cascade-timeline-container');
+  if (!container) return;
+
+  // Category to hex color map for detail border
+  const catBorderColors = {
+    'cat-insurance': '#fbbf24',
+    'cat-maritime': '#4FC3F7',
+    'cat-prediction': '#a855f7',
+    'cat-price': '#ef4444',
+    'cat-freight': '#f97316',
+    'cat-currency': '#818cf8',
+    'cat-supply': '#FFB347',
+    'cat-equities': '#22c55e',
+    'cat-physical': '#94a3b8'
+  };
+
+  // Sort events by lead order
+  const sorted = [...CASCADE_EVENTS].sort((a, b) => a.leadOrder - b.leadOrder);
+
+  let html = '<div class="cascade-timeline">';
+
+  sorted.forEach(ev => {
+    const confDotObs = ev.p45.observation_conf === 'H' ? 'high' : 'medium';
+    const confDotCom = ev.p45.commentary_conf === 'H' ? 'high' : 'medium';
+    const borderColor = catBorderColors[ev.catClass] || '#64748b';
+
+    html += `
+      <div class="cascade-event" id="cascade-ev-${ev.id}" onclick="toggleCascadeEvent('${ev.id}')">
+        <div class="cascade-time-col">
+          <div class="cascade-time-date">${ev.date}</div>
+          <div class="cascade-time-lead">${ev.leadTime}</div>
+        </div>
+        <div class="cascade-event-header">
+          <div class="cascade-marker ${ev.catClass}"></div>
+          <div class="cascade-event-info">
+            <div class="cascade-event-name">${ev.name}</div>
+            <div class="cascade-event-value" style="color: var(--text-primary)">${ev.value}</div>
+            <span class="cascade-event-tag ${ev.catClass}">${ev.catLabel}</span>
+          </div>
+        </div>
+        <div class="cascade-detail" style="border-left-color: ${borderColor}">
+          <div style="font-family:var(--font-data);font-size:11px;color:var(--text-secondary);margin-bottom:10px;line-height:1.6">
+            ${ev.valueDetail}
+          </div>
+          <div class="cascade-p45-section">
+            <div class="cascade-p45-label">OBSERVATION <span class="cascade-p45-conf"><span class="conf-dot ${confDotObs}"></span>${ev.p45.observation_conf}</span></div>
+            <div class="cascade-p45-text">${ev.p45.observation}</div>
+          </div>
+          <div class="cascade-p45-section">
+            <div class="cascade-p45-label">CONTEXT</div>
+            <div class="cascade-p45-text">${ev.p45.context}</div>
+          </div>
+          <div class="cascade-p45-section">
+            <div class="cascade-p45-label">COMMENTARY <span class="cascade-p45-conf"><span class="conf-dot ${confDotCom}"></span>${ev.p45.commentary_conf}</span></div>
+            <div class="cascade-p45-text">${ev.p45.commentary}</div>
+          </div>
+          <div class="cascade-p45-section cascade-p45-caveat">
+            <div class="cascade-p45-label">CAVEAT</div>
+            <div class="cascade-p45-text">${ev.p45.caveat}</div>
+          </div>
+          <div style="margin-top:8px;font-family:var(--font-data);font-size:9px;color:var(--text-muted)">
+            Source: ${ev.p45.source}
+          </div>
+        </div>
+      </div>
+    `;
+  });
+
+  html += '</div>';
+
+  // Add the key insight callout at the bottom
+  html += `
+    <div style="max-width:960px;margin:24px auto 0;padding:16px 20px;background:rgba(239,68,68,0.05);border:1px solid rgba(239,68,68,0.2);border-radius:8px;border-left:4px solid var(--alert)">
+      <div style="font-family:var(--font-data);font-size:11px;font-weight:600;color:var(--alert);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px">KEY INSIGHT</div>
+      <div style="font-family:var(--font-data);font-size:12px;color:var(--text-secondary);line-height:1.7">
+        The cascade reveals the <span style="color:var(--text-primary);font-weight:600">hidden coupling structure</span> of the global energy system.
+        Insurance moved in hours because underwriters reprice binary risk in real-time.
+        Physical shipping moved in days because ships must physically change course.
+        Equities moved in weeks because stock prices aggregate through quarterly earnings expectations.
+        Supply restructuring took a month because tankers from Russia take 35-50 days to arrive.
+        <span style="color:var(--text-primary);font-weight:600">The ordering is not random &mdash; it reflects the propagation velocity of information through different market mechanisms.</span>
+      </div>
+      <div style="margin-top:8px;font-family:var(--font-data);font-size:9px;color:var(--text-muted)">
+        All data from public sources. Sources cited per signal. As of April 2, 2026.
+      </div>
+    </div>
+  `;
+
+  container.innerHTML = html;
 }
 
 // Close sources panel on outside click

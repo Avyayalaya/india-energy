@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>India Energy Nervous System — LinkedIn Carousel</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+  :root {
+    --bg: #FDFAF6;
+    --text: #2C2520;
+    --accent: #B85C38;
+    --sage: #5B7B6A;
+    --warm-gold: #B8963E;
+    --stone: #8B7D6B;
+    --bg-deep: #F5F0E8;
+    --border: #E8E0D4;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #E8E0D4;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 40px;
+    padding: 40px;
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+
+  @media print {
+    body { background: white; gap: 0; padding: 0; }
+    .slide { page-break-after: always; box-shadow: none; }
+  }
+
+  .slide {
+    width: 1080px;
+    height: 1080px;
+    background: var(--bg);
+    position: relative;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+
+  .slide-number {
+    position: absolute;
+    bottom: 28px;
+    right: 36px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--stone);
+    opacity: 0.5;
+  }
+
+  .label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  /* ── CORNER ACCENT ── */
+  .corner-accent::before {
+    content: '';
+    position: absolute;
+    top: -60px;
+    right: -60px;
+    width: 240px;
+    height: 240px;
+    background: linear-gradient(135deg, var(--accent) 0%, transparent 60%);
+    opacity: 0.06;
+    transform: rotate(0deg);
+  }
+
+  /* ════════════════════════════════════════ */
+  /* SLIDE 1: DASHBOARD HERO                 */
+  /* ════════════════════════════════════════ */
+  .slide-hero {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 56px 64px 48px;
+  }
+  .slide-hero .label { margin-bottom: 16px; }
+  .slide-hero h1 {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 38px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.15;
+    margin-bottom: 24px;
+    text-align: center;
+  }
+  .slide-hero .screenshot-frame {
+    width: 900px;
+    height: 560px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    overflow: hidden;
+    box-shadow: 0 8px 40px rgba(44,37,32,0.12);
+    background: var(--bg-deep);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 28px;
+  }
+  .slide-hero .screenshot-frame img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top left;
+  }
+  .screenshot-placeholder {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    color: var(--stone);
+    text-align: center;
+    line-height: 1.8;
+  }
+  .screenshot-placeholder strong {
+    display: block;
+    font-size: 16px;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+  .slide-hero .subtitle {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    color: var(--stone);
+    text-align: center;
+    line-height: 1.7;
+    margin-bottom: 12px;
+  }
+  .slide-hero .subtitle strong {
+    color: var(--text);
+  }
+  .slide-hero .url {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 15px;
+    color: var(--accent);
+  }
+
+  /* ════════════════════════════════════════ */
+  /* SLIDE 2: DEPENDENCY + CHOKEPOINT        */
+  /* ════════════════════════════════════════ */
+  .slide-stats {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 80px 90px;
+  }
+  .slide-stats .label { margin-bottom: 24px; }
+  .slide-stats h2 {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 42px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.15;
+    margin-bottom: 48px;
+  }
+  .slide-stats h2 span { color: var(--accent); }
+  .stat-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 0;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    background: white;
+    margin-bottom: 32px;
+  }
+  .stat-cell {
+    padding: 28px 24px;
+    border-right: 1px solid #F0EBE4;
+    border-bottom: 1px solid #F0EBE4;
+  }
+  .stat-cell:nth-child(3n) { border-right: none; }
+  .stat-cell:nth-last-child(-n+3) { border-bottom: none; }
+  .stat-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 8px;
+    line-height: 1;
+  }
+  .stat-desc {
+    font-size: 13px;
+    color: var(--stone);
+    line-height: 1.45;
+  }
+  .stat-desc strong { color: var(--text); }
+  .source-line {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--stone);
+    opacity: 0.7;
+    letter-spacing: 0.5px;
+  }
+
+  /* ════════════════════════════════════════ */
+  /* SLIDE 3: CRISIS                         */
+  /* ════════════════════════════════════════ */
+  .slide-crisis {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 80px 90px;
+  }
+  .slide-crisis .label { margin-bottom: 24px; }
+  .slide-crisis h2 {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 48px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.1;
+    margin-bottom: 12px;
+  }
+  .slide-crisis h2 span { color: var(--accent); }
+  .slide-crisis .date-line {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    color: var(--stone);
+    margin-bottom: 48px;
+  }
+  .before-after {
+    display: flex;
+    gap: 32px;
+    margin-bottom: 40px;
+  }
+  .ba-card {
+    flex: 1;
+    background: white;
+    border-radius: 12px;
+    padding: 32px 28px;
+    border: 1px solid var(--border);
+    text-align: center;
+  }
+  .ba-card.card-before { border-top: 3px solid var(--stone); }
+  .ba-card.card-after { border-top: 3px solid var(--accent); }
+  .ba-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+  .card-before .ba-label { color: var(--stone); }
+  .card-after .ba-label { color: var(--accent); }
+  .ba-number {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 48px;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 8px;
+  }
+  .card-before .ba-number { color: var(--stone); }
+  .card-after .ba-number { color: var(--accent); }
+  .ba-unit {
+    font-size: 14px;
+    color: var(--stone);
+    line-height: 1.5;
+  }
+  .crisis-impact {
+    display: flex;
+    gap: 28px;
+    padding-top: 32px;
+    border-top: 1px solid var(--border);
+  }
+  .impact-item {
+    flex: 1;
+  }
+  .impact-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 6px;
+  }
+  .impact-desc {
+    font-size: 13px;
+    color: var(--stone);
+    line-height: 1.45;
+  }
+
+  /* ════════════════════════════════════════ */
+  /* SLIDE 4: ADAPTATION                     */
+  /* ════════════════════════════════════════ */
+  .slide-adapt {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 80px 90px;
+  }
+  .slide-adapt .label { margin-bottom: 24px; }
+  .slide-adapt h2 {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 42px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.15;
+    margin-bottom: 48px;
+  }
+  .adapt-bars {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    margin-bottom: 40px;
+  }
+  .adapt-row {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+  .adapt-country {
+    width: 80px;
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--text);
+    text-align: right;
+    flex-shrink: 0;
+  }
+  .adapt-bar-track {
+    flex: 1;
+    height: 40px;
+    background: #F0EBE4;
+    border-radius: 8px;
+    position: relative;
+    overflow: hidden;
+  }
+  .adapt-bar-before {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    background: var(--stone);
+    opacity: 0.35;
+    border-radius: 8px 0 0 8px;
+  }
+  .adapt-bar-after {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    border-radius: 8px 0 0 8px;
+  }
+  .bar-russia { background: var(--accent); }
+  .bar-iraq { background: var(--sage); }
+  .bar-saudi { background: var(--warm-gold); }
+  .adapt-change {
+    width: 100px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 16px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .change-up { color: var(--accent); }
+  .change-down { color: var(--sage); }
+  .adapt-insight {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-style: italic;
+    font-size: 20px;
+    color: var(--text);
+    line-height: 1.5;
+    padding-top: 32px;
+    border-top: 1px solid var(--border);
+    max-width: 700px;
+  }
+  .adapt-insight span { color: var(--accent); font-style: normal; font-weight: 600; }
+
+  /* ════════════════════════════════════════ */
+  /* SLIDE 5: VULNERABILITY                  */
+  /* ════════════════════════════════════════ */
+  .slide-vuln {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 80px 90px;
+  }
+  .slide-vuln .label { margin-bottom: 24px; }
+  .slide-vuln h2 {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 42px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.15;
+    margin-bottom: 48px;
+  }
+  .vuln-blocks {
+    display: flex;
+    gap: 28px;
+    margin-bottom: 40px;
+  }
+  .vuln-card {
+    flex: 1;
+    background: white;
+    border-radius: 12px;
+    padding: 32px 28px;
+    border: 1px solid var(--border);
+  }
+  .vuln-card-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 20px;
+  }
+  .vuln-stat {
+    margin-bottom: 20px;
+  }
+  .vuln-stat:last-child { margin-bottom: 0; }
+  .vuln-stat-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 36px;
+    font-weight: 700;
+    color: var(--accent);
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+  .vuln-stat-desc {
+    font-size: 14px;
+    color: var(--stone);
+    line-height: 1.5;
+  }
+  .vuln-gauge {
+    margin-top: 20px;
+    height: 12px;
+    background: #F0EBE4;
+    border-radius: 6px;
+    position: relative;
+    overflow: hidden;
+  }
+  .vuln-gauge-fill {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    border-radius: 6px;
+    background: var(--accent);
+  }
+  .vuln-gauge-target {
+    position: absolute;
+    top: -4px;
+    height: 20px;
+    width: 2px;
+    background: var(--sage);
+  }
+  .vuln-gauge-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--stone);
+  }
+  .vuln-gauge-labels .target { color: var(--sage); font-weight: 600; }
+
+  /* ════════════════════════════════════════ */
+  /* SLIDE 6: CTA                            */
+  /* ════════════════════════════════════════ */
+  .slide-cta {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 100px 90px;
+  }
+  .slide-cta .cta-headline {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 44px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 40px;
+    line-height: 1.15;
+  }
+  .slide-cta .url-box {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 22px;
+    color: var(--accent);
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 48px;
+    margin-bottom: 48px;
+  }
+  .slide-cta .divider {
+    width: 60px;
+    height: 2px;
+    background: var(--accent);
+    margin-bottom: 40px;
+  }
+  .slide-cta .built-with {
+    font-size: 16px;
+    color: var(--stone);
+    line-height: 1.7;
+    margin-bottom: 8px;
+  }
+  .slide-cta .built-with strong { color: var(--text); }
+  .slide-cta .github {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    color: var(--stone);
+    opacity: 0.7;
+  }
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════ -->
+<!-- SLIDE 1 — DASHBOARD HERO               -->
+<!-- ════════════════════════════════════════ -->
+<div class="slide slide-hero corner-accent">
+  <div class="label">Live Dashboard</div>
+  <h1>India's Energy Nervous System</h1>
+  <div class="screenshot-frame">
+    <img src="preview.png" alt="India Energy Nervous System Dashboard" style="width:100%;height:100%;object-fit:cover;border-radius:4px;">
+  </div>
+  <div class="subtitle">
+    <strong>39</strong> trade routes &middot; <strong>23</strong> refineries &middot; <strong>123</strong> power plants &middot; Every number sourced
+  </div>
+  <div class="url">avyayalaya.github.io/india-energy</div>
+  <span class="slide-number">1 / 6</span>
+</div>
+
+<!-- ════════════════════════════════════════ -->
+<!-- SLIDE 2 — DEPENDENCY + CHOKEPOINT       -->
+<!-- ════════════════════════════════════════ -->
+<div class="slide slide-stats corner-accent">
+  <div class="label">The Dependency</div>
+  <h2><span>85%</span> of India's oil is imported.<br>45% transits through a 54km strait.</h2>
+  <div class="stat-grid">
+    <div class="stat-cell">
+      <div class="stat-value">242</div>
+      <div class="stat-desc"><strong>MMT</strong> crude imported annually</div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-value">4.84</div>
+      <div class="stat-desc"><strong>mb/d</strong> consumed daily</div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-value">45%</div>
+      <div class="stat-desc">Crude via <strong>Hormuz</strong></div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-value">60%</div>
+      <div class="stat-desc">LNG via <strong>Hormuz</strong></div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-value">90%</div>
+      <div class="stat-desc">LPG via <strong>Hormuz</strong></div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-value">54km</div>
+      <div class="stat-desc">Strait width at <strong>narrowest</strong></div>
+    </div>
+  </div>
+  <div class="source-line">Source: PPAC, EIA</div>
+  <span class="slide-number">2 / 6</span>
+</div>
+
+<!-- ════════════════════════════════════════ -->
+<!-- SLIDE 3 — THE CRISIS                    -->
+<!-- ════════════════════════════════════════ -->
+<div class="slide slide-crisis corner-accent">
+  <div class="label">The Crisis</div>
+  <h2><span>95.6%</span> transit collapse.</h2>
+  <div class="date-line">Feb 28, 2026 &mdash; Strait of Hormuz closure</div>
+  <div class="before-after">
+    <div class="ba-card card-before">
+      <div class="ba-label">Before</div>
+      <div class="ba-number">4,140</div>
+      <div class="ba-unit">transits / month</div>
+    </div>
+    <div class="ba-card card-after">
+      <div class="ba-label">After</div>
+      <div class="ba-number">181</div>
+      <div class="ba-unit">transits / month</div>
+    </div>
+  </div>
+  <div class="crisis-impact">
+    <div class="impact-item">
+      <div class="impact-value">$63</div>
+      <div class="impact-desc">Indian basket before</div>
+    </div>
+    <div class="impact-item">
+      <div class="impact-value">$147</div>
+      <div class="impact-desc">Indian basket after</div>
+    </div>
+    <div class="impact-item">
+      <div class="impact-value">+133%</div>
+      <div class="impact-desc">Price surge in 8 weeks</div>
+    </div>
+  </div>
+  <div class="source-line" style="margin-top: 24px;">Source: IMF PortWatch, Lloyd's List, PPAC</div>
+  <span class="slide-number">3 / 6</span>
+</div>
+
+<!-- ════════════════════════════════════════ -->
+<!-- SLIDE 4 — THE ADAPTATION                -->
+<!-- ════════════════════════════════════════ -->
+<div class="slide slide-adapt corner-accent">
+  <div class="label">The Adaptation</div>
+  <h2>Supply map rewired in one month.</h2>
+  <div class="adapt-bars">
+    <div class="adapt-row">
+      <div class="adapt-country">Russia</div>
+      <div class="adapt-bar-track">
+        <div class="adapt-bar-before" style="width: 20%;"></div>
+        <div class="adapt-bar-after bar-russia" style="width: 45%;"></div>
+      </div>
+      <div class="adapt-change change-up">20% &rarr; 45%</div>
+    </div>
+    <div class="adapt-row">
+      <div class="adapt-country">Iraq</div>
+      <div class="adapt-bar-track">
+        <div class="adapt-bar-before" style="width: 22%;"></div>
+        <div class="adapt-bar-after bar-iraq" style="width: 5.5%;"></div>
+      </div>
+      <div class="adapt-change change-down">&minus;75%</div>
+    </div>
+    <div class="adapt-row">
+      <div class="adapt-country">Saudi</div>
+      <div class="adapt-bar-track">
+        <div class="adapt-bar-before" style="width: 16%;"></div>
+        <div class="adapt-bar-after bar-saudi" style="width: 9%;"></div>
+      </div>
+      <div class="adapt-change change-down">&minus;43%</div>
+    </div>
+  </div>
+  <div class="adapt-insight">
+    "Insurance closed the strait before missiles did."<br>
+    <span>War risk: 0.125% &rarr; 3.0%</span>
+  </div>
+  <div class="source-line" style="margin-top: 24px;">Source: PPAC, Lloyd's List</div>
+  <span class="slide-number">4 / 6</span>
+</div>
+
+<!-- ════════════════════════════════════════ -->
+<!-- SLIDE 5 — THE VULNERABILITY             -->
+<!-- ════════════════════════════════════════ -->
+<div class="slide slide-vuln corner-accent">
+  <div class="label">The Vulnerability</div>
+  <h2>One geography. One gap.</h2>
+  <div class="vuln-blocks">
+    <div class="vuln-card">
+      <div class="vuln-card-label">Gujarat Concentration</div>
+      <div class="vuln-stat">
+        <div class="vuln-stat-value">34%</div>
+        <div class="vuln-stat-desc">of national refining capacity</div>
+      </div>
+      <div class="vuln-stat">
+        <div class="vuln-stat-value">60%</div>
+        <div class="vuln-stat-desc">of LNG terminals</div>
+      </div>
+      <div class="vuln-stat">
+        <div class="vuln-stat-desc" style="margin-top: 12px; font-style: italic; color: var(--text);">Single-point-of-failure geography.</div>
+      </div>
+    </div>
+    <div class="vuln-card">
+      <div class="vuln-card-label">Strategic Reserve</div>
+      <div class="vuln-stat">
+        <div class="vuln-stat-value">9.5</div>
+        <div class="vuln-stat-desc">days of coverage at current consumption</div>
+      </div>
+      <div class="vuln-stat">
+        <div class="vuln-stat-value">64%</div>
+        <div class="vuln-stat-desc">SPR capacity filled</div>
+      </div>
+      <div class="vuln-gauge">
+        <div class="vuln-gauge-fill" style="width: 10.6%;"></div>
+        <div class="vuln-gauge-target" style="left: 100%;"></div>
+      </div>
+      <div class="vuln-gauge-labels">
+        <span>9.5 days</span>
+        <span class="target">IEA minimum: 90 days</span>
+      </div>
+    </div>
+  </div>
+  <div class="source-line">Source: PPAC, ISPRL, PIB</div>
+  <span class="slide-number">5 / 6</span>
+</div>
+
+<!-- ════════════════════════════════════════ -->
+<!-- SLIDE 6 — CTA                           -->
+<!-- ════════════════════════════════════════ -->
+<div class="slide slide-cta corner-accent">
+  <div class="cta-headline">Explore the full dashboard.</div>
+  <div class="url-box">avyayalaya.github.io/india-energy</div>
+  <div class="divider"></div>
+  <div class="built-with">Built with <strong>Agent Prime</strong> &mdash; an 11-agent intelligence system.</div>
+  <div class="github">github.com/avyayalaya</div>
+  <span class="slide-number">6 / 6</span>
+</div>
+
+</body>
+</html>
