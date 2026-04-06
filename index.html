@@ -359,6 +359,117 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
   100% { transform: scale(2.5); opacity: 0; }
 }
 
+/* === EXPANDED SIGNAL PANEL (S.2 — PLN-014) === */
+#expanded-signal-panel {
+  display: none;
+  position: fixed; bottom: 80px; left: 0; right: 0;
+  max-height: 50vh; overflow-y: auto;
+  background: rgba(17,24,39,0.97); backdrop-filter: blur(16px);
+  border-top: 1px solid var(--border);
+  z-index: 250;
+  padding: 0 0 12px 0;
+  box-shadow: 0 -8px 32px rgba(0,0,0,0.5);
+  scrollbar-width: thin; scrollbar-color: var(--border) transparent;
+  transition: transform 0.3s ease, opacity 0.2s ease;
+  transform: translateY(100%);
+  opacity: 0;
+}
+#expanded-signal-panel.visible {
+  display: block;
+  transform: translateY(0);
+  opacity: 1;
+}
+#expanded-signal-panel::-webkit-scrollbar { width: 5px; }
+#expanded-signal-panel::-webkit-scrollbar-track { background: transparent; }
+#expanded-signal-panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+.expanded-panel-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 16px 8px 16px;
+  border-bottom: 1px solid var(--border);
+  position: sticky; top: 0;
+  background: rgba(17,24,39,0.98); backdrop-filter: blur(16px);
+  z-index: 10;
+}
+.expanded-panel-title {
+  font-family: var(--font-data); font-size: 11px; font-weight: 600;
+  letter-spacing: 1px; text-transform: uppercase;
+  color: var(--text-secondary);
+}
+.expanded-panel-close {
+  background: none; border: 1px solid var(--border); border-radius: 4px;
+  color: var(--text-secondary); cursor: pointer;
+  font-family: var(--font-data); font-size: 10px;
+  padding: 4px 10px; letter-spacing: 0.5px; text-transform: uppercase;
+  transition: all 0.2s;
+}
+.expanded-panel-close:hover {
+  color: var(--text-primary); border-color: rgba(255,255,255,0.3);
+  background: rgba(255,255,255,0.04);
+}
+
+.signal-category {
+  margin: 0; border-bottom: 1px solid rgba(255,255,255,0.03);
+}
+.signal-category:last-child { border-bottom: none; }
+.signal-category-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: background 0.15s;
+  user-select: none;
+}
+.signal-category-header:hover { background: rgba(255,255,255,0.03); }
+.signal-category-name {
+  font-family: var(--font-data); font-size: 10px; font-weight: 600;
+  letter-spacing: 1px; text-transform: uppercase;
+  color: var(--text-secondary);
+  display: flex; align-items: center; gap: 8px;
+}
+.signal-category-count {
+  font-family: var(--font-data); font-size: 9px; font-weight: 400;
+  color: var(--text-muted);
+  background: rgba(255,255,255,0.04);
+  padding: 1px 6px; border-radius: 3px;
+}
+.signal-category-chevron {
+  font-family: var(--font-data); font-size: 10px;
+  color: var(--text-muted);
+  transition: transform 0.2s;
+}
+.signal-category.expanded .signal-category-chevron {
+  transform: rotate(90deg);
+}
+.signal-category-body {
+  display: none;
+  padding: 4px 16px 8px 16px;
+}
+.signal-category.expanded .signal-category-body {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 8px;
+}
+.expanded-signal-card {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 10px 6px 10px;
+  cursor: pointer;
+  transition: all 0.25s;
+  display: flex; flex-direction: column; justify-content: space-between;
+}
+.expanded-signal-card:hover {
+  border-color: rgba(255,255,255,0.25);
+  box-shadow: 0 0 12px rgba(255,255,255,0.04);
+  background: rgba(255,255,255,0.04);
+}
+.expanded-signal-card .signal-card-header,
+.expanded-signal-card .signal-card-value-row,
+.expanded-signal-card .sparkline,
+.expanded-signal-card .signal-card-source {
+  /* Inherit existing signal card styles */
+}
+
 /* === SIGNAL CASCADE MODAL (S.3 — PLN-014) === */
 #cascade-modal {
   display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -537,6 +648,8 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
   #bottom-bar { grid-row: 4; flex-wrap: wrap; min-height: auto; }
   .signal-card { min-width: 140px; }
   .cascade-toggle { display: none; }
+  #expanded-signal-panel { bottom: auto; position: relative; max-height: none; }
+  .signal-category.expanded .signal-category-body { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
 }
 @media (max-width: 768px) {
   .cascade-timeline { padding-left: 20px; }
@@ -611,12 +724,21 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
 <div id="bottom-bar">
   <div class="signal-bar" id="signal-bar"></div>
   <div class="signal-bar-actions">
-    <button class="more-signals-btn" onclick="alert('Expandable signal categories coming in S.2')">MORE SIGNALS &#9656;</button>
+    <button class="more-signals-btn" id="more-signals-btn" onclick="toggleExpandedPanel()">MORE SIGNALS &#9656;</button>
     <div style="display:flex;align-items:center;gap:4px">
       <button class="share-btn" onclick="copyShareLink()" title="Copy link">&#128203; Share</button>
       <button id="sources-btn" onclick="toggleSources()">Sources &#9656;</button>
     </div>
   </div>
+</div>
+
+<!-- EXPANDED SIGNAL PANEL (S.2 — PLN-014) -->
+<div id="expanded-signal-panel">
+  <div class="expanded-panel-header">
+    <span class="expanded-panel-title">16 Additional Signals &mdash; 5 Categories</span>
+    <button class="expanded-panel-close" onclick="toggleExpandedPanel()">CLOSE &times;</button>
+  </div>
+  <div id="expanded-categories-container"></div>
 </div>
 
 <!-- SIGNAL CASCADE MODAL (S.3 — PLN-014) -->
@@ -1287,6 +1409,807 @@ function showSignalDetail(key) {
 
     <a class="source-link" href="${s.source_url}" target="_blank">Source: ${s.source}</a>
   `);
+}
+
+// ============================================================
+// EXPANDED SIGNAL INTELLIGENCE LAYER — S.2 (PLN-014)
+// 16 additional signals across 5 categories: Freight, Spreads,
+// Currency & Capital, Equities, Storage & Physical.
+// Each signal carries the same structure as the 4 defaults:
+// value, baseline, change, sparkline, confidence, P45 commentary,
+// source URL, and per-crisis-day history for timeline integration.
+// ============================================================
+
+const SIGNAL_CATEGORIES = [
+  {
+    id: 'freight',
+    name: 'FREIGHT',
+    color: '#FFB347',
+    signals: ['bdti', 'vlcc_rate', 'suezmax_rate', 'ffa_curve']
+  },
+  {
+    id: 'spreads',
+    name: 'SPREADS',
+    color: '#ef4444',
+    signals: ['brent_wti_spread', 'dubai_brent_spread', 'indian_basket_premium', 'indian_crack_spread']
+  },
+  {
+    id: 'currency_capital',
+    name: 'CURRENCY & CAPITAL',
+    color: '#f59e0b',
+    signals: ['inr_usd', 'fpi_outflows', 'qatar_cds']
+  },
+  {
+    id: 'equities',
+    name: 'EQUITIES',
+    color: '#22c55e',
+    signals: ['ongc', 'hpcl', 'ioc']
+  },
+  {
+    id: 'storage_physical',
+    name: 'STORAGE & PHYSICAL',
+    color: '#4FC3F7',
+    signals: ['fujairah_inventory', 'ais_gap_pct']
+  }
+];
+
+const EXPANDED_SIGNALS = {
+  // ── FREIGHT (4 signals) ──────────────────────────────────
+  bdti: {
+    name: "BDTI",
+    unit: "points",
+    current: 2842,
+    baseline: 1496,
+    change_pct: 90,
+    change_label: "+90%",
+    direction: "bad",
+    sparkline: [1496, 1600, 1850, 2400, 2900, 2842, 2800],
+    confidence: "H",
+    source: "Baltic Exchange",
+    source_url: "https://www.investing.com/indices/baltic-dirty-tanker",
+    updated: "2026-04-01",
+    formatValue: v => v.toLocaleString(),
+    history: {
+      day0:  { value: 1496, note: "Pre-crisis baseline" },
+      day1:  { value: 1650, note: "Immediate freight repricing" },
+      day7:  { value: 2100, note: "Rerouting costs spike" },
+      day30: { value: 2900, note: "Near peak — maximum rerouting" },
+      day90: { value: 2700, note: "Projected — sustained elevation" },
+      today: { value: 2842, note: "+90% YoY — massive rerouting premium" }
+    },
+    p45: {
+      title: "BALTIC DIRTY TANKER INDEX — FREIGHT SIGNAL",
+      current_label: "2,842 points (Apr 1, 2026)",
+      baseline_label: "~1,496 points (Feb 27, pre-crisis)",
+      change_detail: "+1,346 points (+90% YoY)",
+      peak: "~2,900 (late March 2026)",
+      observation: "BDTI surged 90% year-over-year to 2,842 as the Hormuz closure forced massive rerouting via the Cape of Good Hope. MEG-to-China VLCC rates hit $117,000/day, up $83,000/day YoY.",
+      observation_conf: "H",
+      context: "BDTI is the market-clearing price for moving dirty cargo globally. It moved within hours of the first strikes — faster than oil futures. Freight rates are the most direct measure of physical supply chain stress.",
+      commentary: "The sustained elevation at 2,842 signals that rerouting is now the new normal, not a temporary adjustment. Freight costs are being passed through to importers — India pays this premium on every barrel.",
+      commentary_conf: "M",
+      caveat: "We are not freight traders. BDTI data from Investing.com may have 1-day delay vs. Baltic Exchange real-time feed. Route-specific rates vary significantly."
+    }
+  },
+  vlcc_rate: {
+    name: "VLCC RATE",
+    unit: "$/day",
+    current: 423736,
+    baseline: 45000,
+    change_pct: 841,
+    change_label: "+841%",
+    direction: "bad",
+    sparkline: [45000, 80000, 180000, 350000, 423736, 400000, 410000],
+    confidence: "M",
+    source: "Clarksons",
+    source_url: "https://www.kpler.com/blog/q1-2026-tanker-market-outlook-shadow-fleet-disruption-and-mid-size-strength",
+    updated: "2026-04-01",
+    formatValue: v => "$" + (v/1000).toFixed(0) + "K/d",
+    history: {
+      day0:  { value: 45000,  note: "Normal VLCC economics" },
+      day1:  { value: 85000,  note: "Immediate premium" },
+      day7:  { value: 220000, note: "Supply crunch accelerates" },
+      day30: { value: 423736, note: "ALL-TIME RECORD" },
+      day90: { value: 380000, note: "Projected — slightly lower" },
+      today: { value: 423736, note: "Record — $423,736/day MEG-China" }
+    },
+    p45: {
+      title: "VLCC DAILY RATE — FREIGHT SIGNAL",
+      current_label: "$423,736/day (ALL-TIME RECORD)",
+      baseline_label: "~$45,000/day (Feb 27, pre-crisis)",
+      change_detail: "+$378,736/day (+841%)",
+      peak: "$423,736/day (late March — record)",
+      observation: "VLCC rates on the MEG-to-China route hit an all-time record of $423,736/day. Hormuz VLCC transits collapsed ~92% vs. pre-conflict week.",
+      observation_conf: "M",
+      context: "VLCCs carry 2 million barrels each. At $423K/day, the freight cost alone adds ~$3-4/bbl to every cargo. US crude shippers are diverting to smaller Suezmax and Aframax vessels for routing flexibility.",
+      commentary: "The record rate signals genuine physical scarcity of large tankers on primary MEG routes. This is not speculation — it is the market clearing price when 92% of capacity disappears from a route.",
+      commentary_conf: "M",
+      caveat: "We are not shipping brokers. Clarksons data is subscription-based; our figure comes from public reporting. Actual rates vary by contract type (spot vs. time charter)."
+    }
+  },
+  suezmax_rate: {
+    name: "SUEZMAX",
+    unit: "$/day",
+    current: 85000,
+    baseline: 28000,
+    change_pct: 204,
+    change_label: "+204%",
+    direction: "bad",
+    sparkline: [28000, 35000, 50000, 72000, 88000, 85000, 83000],
+    confidence: "M",
+    source: "Clarksons",
+    source_url: "https://www.kpler.com/blog/q1-2026-tanker-market-outlook-shadow-fleet-disruption-and-mid-size-strength",
+    updated: "2026-04-01",
+    formatValue: v => "$" + (v/1000).toFixed(0) + "K/d",
+    history: {
+      day0:  { value: 28000, note: "Normal Suezmax rates" },
+      day1:  { value: 36000, note: "Early demand shift" },
+      day7:  { value: 55000, note: "Mid-size demand surge" },
+      day30: { value: 88000, note: "Peak — alternative route premium" },
+      day90: { value: 80000, note: "Projected — elevated" },
+      today: { value: 85000, note: "3x normal — mid-size tanker premium" }
+    },
+    p45: {
+      title: "SUEZMAX DAILY RATE — FREIGHT SIGNAL",
+      current_label: "~$85,000/day (Apr 1, 2026)",
+      baseline_label: "~$28,000/day (Feb 27, pre-crisis)",
+      change_detail: "+$57,000/day (+204%)",
+      peak: "~$88,000/day (late March)",
+      observation: "Suezmax rates tripled as cargo was split into smaller parcels for alternative routes. Suezmax vessels outperformed VLCCs in January as shippers prioritized routing flexibility over scale.",
+      observation_conf: "M",
+      context: "Suezmax vessels (1M barrels) can navigate routes that VLCCs cannot. The Suezmax premium signals systematic rerouting behavior — not a temporary disruption but a logistics restructuring.",
+      commentary: "When Suezmax rates rise faster than VLCC, it confirms cargo is being physically rerouted via Cape of Good Hope and alternative corridors. The relative spread between vessel classes is a rerouting signal.",
+      commentary_conf: "M",
+      caveat: "We are not freight analysts. Rate data from public Kpler reporting. Actual spot rates fluctuate daily and vary by flag, insurance status, and contract terms."
+    }
+  },
+  ffa_curve: {
+    name: "FFA FORWARD",
+    unit: "premium",
+    current: 43,
+    baseline: 0,
+    change_pct: 43,
+    change_label: "+43%",
+    direction: "bad",
+    sparkline: [0, 5, 12, 25, 38, 43, 40],
+    confidence: "M",
+    source: "Baltic Exchange",
+    source_url: "https://www.balticexchange.com/en/data-services/freight-derivatives-.html",
+    updated: "2026-04-01",
+    formatValue: v => v + "% contango",
+    history: {
+      day0:  { value: 0,  note: "Flat curve — no crisis expected" },
+      day1:  { value: 8,  note: "Slight contango forms" },
+      day7:  { value: 20, note: "Forward curve steepening" },
+      day30: { value: 43, note: "July at 43% premium to spot" },
+      day90: { value: 35, note: "Projected — gradual flattening" },
+      today: { value: 43, note: "Strong contango — crisis to deepen" }
+    },
+    p45: {
+      title: "FFA FORWARD CURVE — FREIGHT SIGNAL",
+      current_label: "July contract at 43% premium to spot",
+      baseline_label: "Flat (Feb 27, pre-crisis)",
+      change_detail: "Flat → 43% contango",
+      peak: "43% July premium (late March)",
+      observation: "Forward Freight Agreements shifted into steep contango with the July contract trading at a 43% premium to spot. Open interest jumped 71% and volume surged above 100,000 lots.",
+      observation_conf: "M",
+      context: "FFA contango means the market expects freight rates to RISE — the crisis will deepen or persist. Backwardation would signal normalization expectations. FFAs are directly tradeable instruments — real money behind these forecasts.",
+      commentary: "The 43% July premium is a strong 'no resolution before summer' signal from professional freight traders. This is not retail sentiment — FFA traders have skin in the game on physical shipping economics.",
+      commentary_conf: "M",
+      caveat: "We are not derivatives traders. FFA data from Baltic Exchange is subscription. Our figures come from public reporting. FFA liquidity varies by route and tenor."
+    }
+  },
+
+  // ── SPREADS (4 signals) ──────────────────────────────────
+  brent_wti_spread: {
+    name: "BRENT-WTI",
+    unit: "$/bbl",
+    current: 18,
+    baseline: 3,
+    change_pct: 500,
+    change_label: "+$15",
+    direction: "bad",
+    sparkline: [3, 5, 8, 12.5, 18, 16, 18],
+    confidence: "H",
+    source: "EIA",
+    source_url: "https://www.eia.gov/dnav/pet/pet_pri_spt_s1_d.htm",
+    updated: "2026-04-01",
+    formatValue: v => "$" + v.toFixed(0),
+    history: {
+      day0:  { value: 3,    note: "Normal ~$3 spread" },
+      day1:  { value: 6,    note: "Gulf supply shock widening" },
+      day7:  { value: 12.5, note: "Regional dislocation deepens" },
+      day30: { value: 18,   note: "11-year high spread" },
+      day90: { value: 15,   note: "Projected — elevated" },
+      today: { value: 18,   note: "$18 spread — 11-year high" }
+    },
+    p45: {
+      title: "BRENT-WTI SPREAD — PRICE DISLOCATION SIGNAL",
+      current_label: "~$18/bbl (Apr 1, 2026)",
+      baseline_label: "~$3/bbl (Feb 27, pre-crisis)",
+      change_detail: "+$15/bbl (6x widening)",
+      peak: "~$18 (late March — 11-year high)",
+      observation: "Brent-WTI spread widened to ~$18, the widest since 2015. A brief inversion (WTI > Brent at -$3.72) signaled a panic bid for US crude as a safe-haven barrel.",
+      observation_conf: "H",
+      context: "The spread measures regional supply stress. A widening spread means waterborne crude is scarce while landlocked US crude is relatively abundant. The $18 gap represents the maximum Hormuz disruption premium.",
+      commentary: "The widening is entirely consistent with a Gulf supply shock — Brent reflects waterborne physical tightness while WTI benefits from US production being pipeline-connected and insulated from Hormuz.",
+      commentary_conf: "M",
+      caveat: "We are not oil traders. Spread calculated from publicly available EIA spot prices. Intraday spreads can be wider or narrower than daily close values."
+    }
+  },
+  dubai_brent_spread: {
+    name: "DUBAI-BRENT",
+    unit: "$/bbl",
+    current: 29,
+    baseline: 1,
+    change_pct: 2800,
+    change_label: "+$28",
+    direction: "bad",
+    sparkline: [1, 3, 10, 22, 64, 35, 29],
+    confidence: "M",
+    source: "Platts",
+    source_url: "https://www.cnbc.com/2026/03/19/166-a-barrel-middle-east-oil-gives-clue-to-where-all-prices-could-be-headed-if-iran-war-drags-on.html",
+    updated: "2026-04-01",
+    formatValue: v => "$" + v.toFixed(0),
+    history: {
+      day0:  { value: 1,  note: "Normal Dubai-Brent parity" },
+      day1:  { value: 5,  note: "Gulf premium forming" },
+      day7:  { value: 18, note: "Physical market seizing" },
+      day30: { value: 64, note: "Peak — $166 Dubai vs $102 Brent" },
+      day90: { value: 25, note: "Projected — still dislocated" },
+      today: { value: 29, note: "Dubai at ~$130 vs Brent ~$101" }
+    },
+    p45: {
+      title: "DUBAI-BRENT SPREAD — GULF PHYSICAL SIGNAL",
+      current_label: "~$29/bbl (Dubai ~$130 vs Brent ~$101)",
+      baseline_label: "~$1/bbl (Feb 27, normal parity)",
+      change_detail: "+$28/bbl (~2,800% widening)",
+      peak: "~$64/bbl (Oman at $154, Dubai at $166 peak)",
+      observation: "Dubai crude at ~$130/bbl and Oman at ~$154/bbl (record) vs Brent at ~$101. The Oman-WTI gap hit $61 — an unprecedented 65% premium. JPMorgan called Dubai and Oman 'a more accurate reflection of the physical dislocation.'",
+      observation_conf: "M",
+      context: "India's crude basket is Dubai/Oman-linked, not Brent-linked. When Dubai-Brent blows out, India pays the wider price. This is the purest signal of Hormuz disruption — it strips out Atlantic-basin noise.",
+      commentary: "The $29 Dubai-Brent gap means India is paying $29/bbl MORE than what Brent suggests. Every headline saying 'oil at $101' understates India's actual cost by nearly 30%. This is the hidden surcharge.",
+      commentary_conf: "M",
+      caveat: "We are not crude oil traders. Dubai/Oman spot prices are from Platts (subscription). Our figures come from public CNBC/JPMorgan reporting. Actual Indian basket price published by PPAC monthly."
+    }
+  },
+  indian_basket_premium: {
+    name: "INDIAN BASKET",
+    unit: "$/bbl above WTI",
+    current: 45,
+    baseline: 3,
+    change_pct: 1400,
+    change_label: "+$42",
+    direction: "bad",
+    sparkline: [3, 8, 18, 35, 55, 48, 45],
+    confidence: "M",
+    source: "PPAC",
+    source_url: "https://ppac.gov.in/prices/international-prices-of-crude-oil",
+    updated: "2026-04-01",
+    formatValue: v => "+$" + v.toFixed(0),
+    history: {
+      day0:  { value: 3,  note: "Normal basket-WTI parity" },
+      day1:  { value: 10, note: "Premium emerging" },
+      day7:  { value: 25, note: "Widening fast" },
+      day30: { value: 55, note: "Peak premium" },
+      day90: { value: 40, note: "Projected — still elevated" },
+      today: { value: 45, note: "$45 above WTI — India-specific stress" }
+    },
+    p45: {
+      title: "INDIAN BASKET PREMIUM — INDIA-SPECIFIC SIGNAL",
+      current_label: "~$45/bbl above WTI (Apr 1, 2026)",
+      baseline_label: "~$3/bbl above WTI (Feb 27, pre-crisis)",
+      change_detail: "+$42/bbl premium widening",
+      peak: "~$55/bbl above WTI (mid-March)",
+      observation: "India's crude basket hit ~$157/bbl (per PPAC reporting) vs WTI at ~$96. The $45+ premium over WTI is unprecedented and reflects India's structural dependence on Gulf-sourced crude.",
+      observation_conf: "M",
+      context: "Each $10 rise in crude adds Rs. 80,000-90,000 crore (~$10B) to India's annual import bill. India imports 85-90% of crude needs. The basket premium compounds the headline price pain.",
+      commentary: "The WTI price reported in US financial media dramatically understates what India actually pays. The basket premium is the gap between what America sees and what India experiences.",
+      commentary_conf: "M",
+      caveat: "We are not energy economists. PPAC publishes Indian basket price monthly with lag. Our premium estimate is derived from public reporting. Actual procurement prices vary by refiner and contract."
+    }
+  },
+  indian_crack_spread: {
+    name: "CRACK SPREAD",
+    unit: "GRM",
+    current: 4.8,
+    baseline: 19.5,
+    change_pct: -75.4,
+    change_label: "-75%",
+    direction: "bad",
+    sparkline: [19.5, 16, 12, 8, 5, 4.8, 5.2],
+    confidence: "M",
+    source: "PPAC",
+    source_url: "https://ppac.gov.in/",
+    updated: "2026-04-01",
+    formatValue: v => "$" + v.toFixed(1) + "/bbl",
+    history: {
+      day0:  { value: 19.5, note: "Healthy refinery margins" },
+      day1:  { value: 17.0, note: "Margins start compressing" },
+      day7:  { value: 12.0, note: "Crude surging, retail frozen" },
+      day30: { value: 5.0,  note: "Margins near collapse" },
+      day90: { value: 4.0,  note: "Projected — subsidy pressure" },
+      today: { value: 4.8,  note: "$4.8 GRM — down from $19.5" }
+    },
+    p45: {
+      title: "INDIAN CRACK SPREAD — FISCAL STRESS SIGNAL",
+      current_label: "~$4.8/bbl GRM (Apr 1, 2026)",
+      baseline_label: "$19.5/bbl GRM (FY22-23 average)",
+      change_detail: "-$14.7/bbl (-75.4%)",
+      peak: "$19.5/bbl (FY22-23, pre-erosion)",
+      observation: "Indian Oil GRM dropped from $19.5/bbl to ~$4.8/bbl. Retail petrol margins narrowed from Rs.12 to Rs.7.8/litre; diesel from Rs.8 to Rs.2.9/litre. Government has frozen retail prices.",
+      observation_conf: "M",
+      context: "Crack spreads measure refinery profitability. When crude surges but retail prices are frozen (political decision), crack spreads collapse. India's OMCs are absorbing the oil shock on their balance sheets.",
+      commentary: "Collapsing crack spreads are the fiscal canary. They predict either (a) a retail price hike (politically costly) or (b) a subsidy explosion (fiscally costly). There is no third option.",
+      commentary_conf: "M",
+      caveat: "We are not refinery analysts. GRM data from OMC quarterly results with lag. Retail price freeze is a political decision that can change overnight."
+    }
+  },
+
+  // ── CURRENCY & CAPITAL (3 signals) ───────────────────────
+  inr_usd: {
+    name: "INR/USD",
+    unit: "rate",
+    current: 93.94,
+    baseline: 87.50,
+    change_pct: 7.2,
+    change_label: "-7.2%",
+    direction: "bad",
+    sparkline: [87.5, 88.2, 89.5, 91.0, 93.0, 93.94, 93.5],
+    confidence: "H",
+    source: "RBI",
+    source_url: "https://www.rbi.org.in/scripts/ReferenceRateArchive.aspx",
+    updated: "2026-04-01",
+    formatValue: v => "\u20B9" + v.toFixed(2),
+    history: {
+      day0:  { value: 87.50, note: "Pre-crisis level" },
+      day1:  { value: 88.20, note: "Mild depreciation" },
+      day7:  { value: 89.80, note: "RBI intervening" },
+      day30: { value: 93.94, note: "Record low — 93.94" },
+      day90: { value: 95.00, note: "Projected — further weakness" },
+      today: { value: 93.94, note: "Record low — 7.2% depreciation" }
+    },
+    p45: {
+      title: "INR/USD EXCHANGE RATE — CURRENCY STRESS SIGNAL",
+      current_label: "\u20B993.94/USD (Apr 1, 2026)",
+      baseline_label: "\u20B987.50/USD (Feb 27, pre-crisis)",
+      change_detail: "-\u20B96.44 (-7.2% depreciation)",
+      peak: "\u20B993.94 (Mar 23 — record low)",
+      observation: "INR hit a record low of 93.94/USD on March 23, 2026. Analysts warn INR could reach 100/USD if the war drags on. RBI intervention providing only temporary relief.",
+      observation_conf: "H",
+      context: "INR/USD is a real-time proxy for India's oil import stress. Each Rs.1 depreciation compounds the import bill — higher oil in dollars AND each dollar costs more rupees. Double whammy.",
+      commentary: "The depreciation spiral is self-reinforcing: oil shock → trade deficit widens → FPI outflows → rupee weakens → oil becomes even more expensive in rupee terms. RBI reserves are finite.",
+      commentary_conf: "M",
+      caveat: "We are not forex analysts. INR/USD from RBI reference rate. Analysts' 100/USD target is from Bloomberg reporting, not our projection."
+    }
+  },
+  fpi_outflows: {
+    name: "FPI OUTFLOWS",
+    unit: "$B",
+    current: 11,
+    baseline: 0,
+    change_pct: -100,
+    change_label: "-$11B",
+    direction: "bad",
+    sparkline: [0, 1.5, 3.2, 5.8, 8.5, 11, 10.5],
+    confidence: "H",
+    source: "NSDL",
+    source_url: "https://www.fpi.nsdl.co.in/web/Reports/Latest.aspx",
+    updated: "2026-04-01",
+    formatValue: v => "-$" + v.toFixed(0) + "B",
+    history: {
+      day0:  { value: 0,    note: "Net neutral flows" },
+      day1:  { value: 1.2,  note: "Initial sell-off" },
+      day7:  { value: 3.5,  note: "Accelerating outflows" },
+      day30: { value: 8.5,  note: "Heavy institutional selling" },
+      day90: { value: 12.0, note: "Projected — continued outflows" },
+      today: { value: 11.0, note: ">$11B withdrawn since crisis" }
+    },
+    p45: {
+      title: "FPI OUTFLOWS — CAPITAL FLIGHT SIGNAL",
+      current_label: ">$11B cumulative outflows (Apr 1, 2026)",
+      baseline_label: "Net neutral (Feb 27, pre-crisis)",
+      change_detail: "-$11B+ in ~30 days",
+      peak: "Accelerating (no plateau visible)",
+      observation: "Foreign Portfolio Investors have withdrawn over $11 billion from Indian equity and debt markets since the crisis began. The outflow rate shows no signs of stabilizing.",
+      observation_conf: "H",
+      context: "FPI outflows compound the rupee depreciation spiral. When foreign investors sell Indian assets, they convert rupees to dollars, adding selling pressure on INR. This amplifies the oil import cost spiral.",
+      commentary: "The $11B outflow in 30 days is significant — it signals institutional reassessment of India risk, not just temporary risk-off. The absence of a plateau suggests the repricing is ongoing.",
+      commentary_conf: "M",
+      caveat: "We are not fund managers. FPI data from NSDL with 1-day lag. Outflow figures include both equity and debt; equity outflows have larger market impact."
+    }
+  },
+  qatar_cds: {
+    name: "QATAR CDS",
+    unit: "bps",
+    current: 180,
+    baseline: 45,
+    change_pct: 300,
+    change_label: "+300%",
+    direction: "bad",
+    sparkline: [45, 55, 80, 120, 170, 180, 175],
+    confidence: "M",
+    source: "Bloomberg (ref)",
+    source_url: "https://www.investing.com/rates-bonds/world-cds",
+    updated: "2026-04-01",
+    formatValue: v => v + " bps",
+    history: {
+      day0:  { value: 45,  note: "Normal sovereign risk" },
+      day1:  { value: 58,  note: "Initial widening" },
+      day7:  { value: 90,  note: "Ras Laffan damage priced in" },
+      day30: { value: 170, note: "Damage assessment: $23B repair" },
+      day90: { value: 160, note: "Projected — elevated" },
+      today: { value: 180, note: "4x normal — Ras Laffan damage" }
+    },
+    p45: {
+      title: "QATAR CDS SPREAD — SOVEREIGN RISK SIGNAL",
+      current_label: "~180 bps (Apr 1, 2026)",
+      baseline_label: "~45 bps (Feb 27, pre-crisis)",
+      change_detail: "+135 bps (~300% widening)",
+      peak: "~180 bps (current — may not have peaked)",
+      observation: "Qatar's CDS spread spiked ~4x following confirmed damage to the Ras Laffan LNG complex — the world's largest LNG processing facility. Estimated damage: $23B repair bill, 3-5 year timeline, $20B/year revenue loss.",
+      observation_conf: "M",
+      context: "CDS spreads price sovereign default risk. Qatar's economy depends heavily on Ras Laffan. The spike signals market concern about Qatar's fiscal trajectory — not imminent default, but structural revenue loss.",
+      commentary: "Qatar CDS is a proxy for global LNG supply confidence. India's LNG imports transit Hormuz from Qatar. If Ras Laffan is offline for 3-5 years, India must find alternative LNG sources at higher cost.",
+      commentary_conf: "M",
+      caveat: "We are not credit analysts. CDS data from Bloomberg (delayed/reference). Real-time CDS requires terminal access. Our bps figure is approximate from public reporting."
+    }
+  },
+
+  // ── EQUITIES (3 signals) ─────────────────────────────────
+  ongc: {
+    name: "ONGC",
+    unit: "% change",
+    current: 7,
+    baseline: 0,
+    change_pct: 7,
+    change_label: "+7%",
+    direction: "good",
+    sparkline: [100, 102, 104, 106, 108, 107, 107],
+    confidence: "H",
+    source: "NSE",
+    source_url: "https://www.nseindia.com/get-quotes/equity?symbol=ONGC",
+    updated: "2026-04-01",
+    formatValue: v => (v >= 0 ? "+" : "") + v + "%",
+    history: {
+      day0:  { value: 0,  note: "Baseline" },
+      day1:  { value: 2,  note: "Upstream benefits start" },
+      day7:  { value: 4,  note: "Rising with crude" },
+      day30: { value: 7,  note: "+7% — upstream windfall" },
+      day90: { value: 10, note: "Projected — continued benefit" },
+      today: { value: 7,  note: "+7% MTD — upstream beneficiary" }
+    },
+    p45: {
+      title: "ONGC STOCK — UPSTREAM EQUITY SIGNAL",
+      current_label: "+7% in March 2026",
+      baseline_label: "Pre-crisis level (Feb 27)",
+      change_detail: "+7% monthly (upstream E&P benefit)",
+      peak: "+7% (March close)",
+      observation: "ONGC gained ~7% in March as upstream E&P companies benefit from higher crude prices. Every $1/bbl increase adds ~Rs.6,180 crore/year to ONGC earnings.",
+      observation_conf: "H",
+      context: "ONGC is India's largest upstream producer. Higher crude = higher realizations on domestic production. The ONGC rally while OMCs crash is the upstream/downstream divergence signal.",
+      commentary: "ONGC rising while HPCL falls is a pure signal of unhedged oil exposure in India's energy sector. The divergence width measures the market's conviction that crude stays elevated.",
+      commentary_conf: "M",
+      caveat: "We are not equity analysts. Stock data from NSE. Past price movements do not predict future performance. ONGC also has downstream exposure (MRPL subsidiary)."
+    }
+  },
+  hpcl: {
+    name: "HPCL",
+    unit: "% change",
+    current: -25,
+    baseline: 0,
+    change_pct: -25,
+    change_label: "-25%",
+    direction: "bad",
+    sparkline: [100, 96, 90, 82, 78, 75, 76],
+    confidence: "H",
+    source: "NSE",
+    source_url: "https://www.nseindia.com/get-quotes/equity?symbol=HINDPETRO",
+    updated: "2026-04-01",
+    formatValue: v => v + "%",
+    history: {
+      day0:  { value: 0,   note: "Baseline" },
+      day1:  { value: -3,  note: "Initial sell-off" },
+      day7:  { value: -10, note: "Margin compression feared" },
+      day30: { value: -25, note: "-25% — unhedged downstream" },
+      day90: { value: -30, note: "Projected — if prices stay" },
+      today: { value: -25, note: "-25% MTD — worst performing OMC" }
+    },
+    p45: {
+      title: "HPCL STOCK — DOWNSTREAM EQUITY SIGNAL",
+      current_label: "-25% in March 2026",
+      baseline_label: "Pre-crisis level (Feb 27)",
+      change_detail: "-25% monthly (unhedged downstream exposure)",
+      peak: "-25% (March close — worst OMC)",
+      observation: "HPCL cratered 25% in March — the worst-performing oil marketing company. HPCL is the most unhedged of India's major OMCs with the smallest crude production offset.",
+      observation_conf: "H",
+      context: "HPCL buys crude at market price and sells refined products at government-frozen retail prices. The gap between the two is being absorbed on HPCL's balance sheet. No hedging buffer.",
+      commentary: "HPCL is the canary for India's downstream sector. When HPCL crashes hardest, it signals the market believes retail price hikes are politically impossible and subsidy support is uncertain.",
+      commentary_conf: "M",
+      caveat: "We are not equity analysts. Stock data from NSE. HPCL's exposure depends on its specific crude sourcing mix and any private hedging not disclosed publicly."
+    }
+  },
+  ioc: {
+    name: "IOC",
+    unit: "% change",
+    current: -18,
+    baseline: 0,
+    change_pct: -18,
+    change_label: "-18%",
+    direction: "bad",
+    sparkline: [100, 97, 92, 86, 83, 82, 83],
+    confidence: "H",
+    source: "NSE",
+    source_url: "https://www.nseindia.com/get-quotes/equity?symbol=IOC",
+    updated: "2026-04-01",
+    formatValue: v => v + "%",
+    history: {
+      day0:  { value: 0,   note: "Baseline" },
+      day1:  { value: -2,  note: "Initial sell-off" },
+      day7:  { value: -8,  note: "Crude pass-through fears" },
+      day30: { value: -18, note: "-18% — largest refiner exposed" },
+      day90: { value: -22, note: "Projected — if crude persists" },
+      today: { value: -18, note: "-18% MTD — India's largest refiner" }
+    },
+    p45: {
+      title: "IOC STOCK — DOWNSTREAM EQUITY SIGNAL",
+      current_label: "-18% in March 2026",
+      baseline_label: "Pre-crisis level (Feb 27)",
+      change_detail: "-18% monthly (largest refiner, exposed)",
+      peak: "-18% (March close)",
+      observation: "Indian Oil Corporation — India's largest refiner at 80.7 MMTPA capacity — dropped 18% in March. IOC processes the most crude and has the largest absolute exposure to input cost inflation.",
+      observation_conf: "H",
+      context: "IOC operates 11 refineries processing ~1.6 mb/d. At these volumes, each $10/bbl crude increase impacts IOC by ~Rs.50,000 crore annually if retail prices remain frozen.",
+      commentary: "IOC's decline is less severe than HPCL (-25%) because IOC has some upstream offset via its subsidiary and larger scale to absorb losses. But -18% signals genuine market concern about OMC balance sheets.",
+      commentary_conf: "M",
+      caveat: "We are not equity analysts. Stock data from NSE. IOC's actual financial impact depends on its procurement strategy, inventory positions, and government subsidy decisions."
+    }
+  },
+
+  // ── STORAGE & PHYSICAL (2 signals) ───────────────────────
+  fujairah_inventory: {
+    name: "FUJAIRAH",
+    unit: "status",
+    current: 1,
+    baseline: 0,
+    change_pct: -100,
+    change_label: "DAMAGED",
+    direction: "bad",
+    sparkline: [100, 95, 88, 75, 60, 55, 50],
+    confidence: "M",
+    source: "Platts (free weekly)",
+    source_url: "https://fujairah.platts.com/fujairah/",
+    updated: "2026-04-01",
+    formatValue: v => v >= 1 ? "DAMAGED" : "NORMAL",
+    history: {
+      day0:  { value: 0, note: "Normal operations — 70M bbl capacity" },
+      day1:  { value: 0, note: "No immediate damage" },
+      day7:  { value: 1, note: "Mar 3: drone debris fire at terminal" },
+      day30: { value: 1, note: "Mar 16: second drone attack, large fire" },
+      day90: { value: 1, note: "Projected — repairs ongoing" },
+      today: { value: 1, note: "1 of 15 tanks confirmed damaged" }
+    },
+    p45: {
+      title: "FUJAIRAH OIL STORAGE — PHYSICAL INFRASTRUCTURE SIGNAL",
+      current_label: "DAMAGED — 1 of 15 tanks hit (Apr 1, 2026)",
+      baseline_label: "Fully operational (Feb 27, pre-crisis)",
+      change_detail: "Operational → Damaged (two strikes)",
+      peak: "March 16 — large fire from second drone attack",
+      observation: "Satellite imagery confirmed storage tanks severely damaged at Fujairah Oil Industry Zone. March 3: falling debris from intercepted drone caused fire. March 16: direct drone strike caused large fire. JSW confirmed 1 of 15 tanks at Fujairah Liquid Terminal sustained damage.",
+      observation_conf: "M",
+      context: "Fujairah is the world's 2nd largest bunkering hub with ~70 million barrels of storage. It is the main refueling point for ships bypassing Hormuz. Damage reduces regional storage buffer and bunkering capacity.",
+      commentary: "Fujairah damage removes a critical logistics buffer at exactly the moment demand for alternative bunkering is highest. Ships rerouting via Cape of Good Hope still need Fujairah-area fuel stops.",
+      commentary_conf: "M",
+      caveat: "We are not infrastructure analysts. Damage assessment from public satellite imagery and JSW disclosure. Full extent of storage capacity loss is uncertain. Platts publishes free weekly inventory data."
+    }
+  },
+  ais_gap_pct: {
+    name: "AIS DARK %",
+    unit: "%",
+    current: 80,
+    baseline: 5,
+    change_pct: 1500,
+    change_label: "80%",
+    direction: "bad",
+    sparkline: [5, 15, 35, 55, 75, 80, 78],
+    confidence: "M",
+    source: "IMF PortWatch",
+    source_url: "https://portwatch.imf.org/",
+    updated: "2026-04-01",
+    formatValue: v => v + "% dark",
+    history: {
+      day0:  { value: 5,  note: "Normal AIS compliance" },
+      day1:  { value: 18, note: "Shadow fleet activating" },
+      day7:  { value: 45, note: "Most commercial ships gone" },
+      day30: { value: 80, note: "80% of transits are dark fleet" },
+      day90: { value: 75, note: "Projected — dark fleet dominates" },
+      today: { value: 80, note: "80% of March Hormuz transits were dark" }
+    },
+    p45: {
+      title: "AIS DARK FLEET % — SANCTIONS EVASION SIGNAL",
+      current_label: "~80% of March Hormuz transits (Apr 1, 2026)",
+      baseline_label: "~5% (Feb 27, normal AIS compliance)",
+      change_detail: "5% → 80% (16x increase in dark shipping)",
+      peak: "80% (March — effectively all traffic is shadow fleet)",
+      observation: "80% of tracked Hormuz transits in early March 2026 were 'dark fleet' — vessels with AIS transponders disabled, frequently changing flags, using opaque insurance. ~1,100 dark fleet vessels operate globally (17-18% of all tankers).",
+      observation_conf: "M",
+      context: "When legitimate commercial vessels stop transiting (insurance too expensive, risk too high), only shadow fleet continues. 14 shadow fleet vessels were blocked by US State Department sanctions in Feb 2026.",
+      commentary: "An 80% dark fleet share means Hormuz is effectively operating as an illicit-only corridor. The remaining 20% are likely Iranian-flagged or state-operated vessels. Legitimate international shipping has evacuated.",
+      commentary_conf: "M",
+      caveat: "We are not maritime intelligence analysts. AIS gap data from Lloyd's List Intelligence and IMF PortWatch. 'Dark' does not always mean illicit — some vessels disable AIS for legitimate safety reasons in conflict zones."
+    }
+  }
+};
+
+// ── Expanded panel rendering and interaction ──────────────
+let expandedPanelOpen = false;
+
+function toggleExpandedPanel() {
+  const panel = document.getElementById('expanded-signal-panel');
+  const btn = document.getElementById('more-signals-btn');
+  expandedPanelOpen = !expandedPanelOpen;
+
+  if (expandedPanelOpen) {
+    renderExpandedCategories();
+    panel.style.display = 'block';
+    // Force reflow for transition
+    panel.offsetHeight;
+    panel.classList.add('visible');
+    btn.innerHTML = 'FEWER SIGNALS &#9666;';
+  } else {
+    panel.classList.remove('visible');
+    // Wait for transition, then hide
+    setTimeout(() => {
+      if (!expandedPanelOpen) panel.style.display = 'none';
+    }, 300);
+    btn.innerHTML = 'MORE SIGNALS &#9656;';
+  }
+}
+
+function renderExpandedCategories() {
+  const container = document.getElementById('expanded-categories-container');
+  if (!container) return;
+
+  container.innerHTML = SIGNAL_CATEGORIES.map(cat => {
+    const signalCards = cat.signals.map(key => {
+      const s = EXPANDED_SIGNALS[key];
+      if (!s) return '';
+      const dayData = s.history[selectedCascadeDay];
+      const displayValue = dayData ? dayData.value : s.current;
+      const displayBaseline = s.baseline;
+      const changePct = displayBaseline !== 0 ? ((displayValue - displayBaseline) / displayBaseline * 100) : 0;
+
+      const maxVal = Math.max(...s.sparkline);
+      const barColor = s.direction === 'bad' ? 'var(--alert)' : 'var(--green)';
+      const sparkBars = s.sparkline.map(v => {
+        const h = maxVal > 0 ? (v / maxVal * 100) : 0;
+        return `<div class="spark-bar" style="height:${Math.max(2, h)}%;background:${barColor}"></div>`;
+      }).join('');
+
+      const changeLabel = displayBaseline !== 0
+        ? ((changePct >= 0 ? '+' : '') + changePct.toFixed(0) + '%')
+        : s.change_label;
+      const changeArrow = changePct >= 0 ? '\u25B2' : '\u25BC';
+      const changeClass = s.direction === 'bad' ? 'bad' : 'good';
+      const confClass = s.confidence === 'H' ? 'high' : 'medium';
+
+      return `
+        <div class="expanded-signal-card" onclick="showExpandedSignalDetail('${key}')">
+          <div class="signal-card-header">
+            <span class="signal-card-name">${s.name}</span>
+            <span class="signal-confidence"><span class="conf-dot ${confClass}"></span>${s.confidence}</span>
+          </div>
+          <div class="signal-card-value-row">
+            <span class="signal-card-value">${s.formatValue(displayValue)}</span>
+            <span class="signal-card-change ${changeClass}">${changeArrow}${changeLabel}</span>
+          </div>
+          <div class="sparkline">${sparkBars}</div>
+          <div class="signal-card-source">${s.source} \u00B7 ${s.updated}</div>
+        </div>
+      `;
+    }).join('');
+
+    return `
+      <div class="signal-category" id="cat-${cat.id}">
+        <div class="signal-category-header" onclick="toggleCategory('${cat.id}')">
+          <span class="signal-category-name">
+            <span style="color:${cat.color}">\u25CF</span>
+            ${cat.name}
+            <span class="signal-category-count">${cat.signals.length}</span>
+          </span>
+          <span class="signal-category-chevron">&#9656;</span>
+        </div>
+        <div class="signal-category-body">${signalCards}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+function toggleCategory(catId) {
+  const el = document.getElementById('cat-' + catId);
+  if (el) el.classList.toggle('expanded');
+}
+
+function showExpandedSignalDetail(key) {
+  const s = EXPANDED_SIGNALS[key];
+  if (!s) return;
+  const p = s.p45;
+
+  const maxVal = Math.max(...s.sparkline);
+  const barColor = s.direction === 'bad' ? 'var(--alert)' : 'var(--green)';
+  const sparkBarsHTML = s.sparkline.map(v => {
+    const h = maxVal > 0 ? (v / maxVal * 100) : 0;
+    return `<div class="spark-bar" style="height:${Math.max(2, h)}%;background:${barColor};width:8px"></div>`;
+  }).join('');
+
+  const dayOrder = ['day0', 'day1', 'day7', 'day30', 'day90', 'today'];
+  const dayLabels = { day0: 'Pre-Crisis', day1: 'Day 1', day7: 'Day 7', day30: 'Day 30', day90: 'Day 90', today: 'Today' };
+  const historyHTML = dayOrder.map(d => {
+    const h = s.history[d];
+    if (!h) return '';
+    const isCurrent = (d === selectedCascadeDay);
+    return `<div class="stat-row" style="${isCurrent ? 'background:rgba(255,255,255,0.04);' : ''}">
+      <span class="stat-label">${dayLabels[d]}</span>
+      <span class="stat-value" style="${isCurrent ? 'color:var(--oil);font-weight:700' : ''}">${s.formatValue(h.value)}</span>
+    </div>`;
+  }).join('');
+
+  const confDotClass = s.confidence === 'H' ? 'high' : 'medium';
+
+  showEntityPanel(`
+    <button class="back-btn" onclick="clearSelection(); renderSignalCards();">&#8592; Back to summary</button>
+    <div class="detail-section">
+      <div class="detail-title">${p.title}</div>
+      <div class="detail-divider" style="background:linear-gradient(90deg, var(--alert), var(--border))"></div>
+    </div>
+
+    <div class="detail-section">
+      <div class="stat-row"><span class="stat-label">CURRENT</span><span class="stat-value alert">${p.current_label}</span></div>
+      <div class="stat-row"><span class="stat-label">BASELINE</span><span class="stat-value">${p.baseline_label}</span></div>
+      <div class="stat-row"><span class="stat-label">CHANGE</span><span class="stat-value alert">${p.change_detail}</span></div>
+      <div class="stat-row"><span class="stat-label">PEAK</span><span class="stat-value oil">${p.peak}</span></div>
+    </div>
+
+    <div class="detail-section">
+      <div style="display:flex;align-items:flex-end;gap:3px;height:40px;margin-bottom:8px">
+        ${sparkBarsHTML}
+      </div>
+    </div>
+
+    <div class="detail-section">
+      <div class="detail-title" style="font-size:11px; color:var(--text-muted)">OBSERVATION <span class="signal-confidence" style="display:inline-flex;vertical-align:middle"><span class="conf-dot ${confDotClass}" style="width:6px;height:6px;border-radius:50%;display:inline-block"></span> ${p.observation_conf}</span></div>
+      <div style="font-family:var(--font-data);font-size:11px;color:var(--text-secondary);line-height:1.7">${p.observation}</div>
+    </div>
+
+    <div class="detail-section">
+      <div class="detail-title" style="font-size:11px; color:var(--text-muted)">CONTEXT</div>
+      <div style="font-family:var(--font-data);font-size:11px;color:var(--text-secondary);line-height:1.7">${p.context}</div>
+    </div>
+
+    <div class="detail-section">
+      <div class="detail-title" style="font-size:11px; color:var(--text-muted)">COMMENTARY <span class="signal-confidence" style="display:inline-flex;vertical-align:middle"><span class="conf-dot ${s.confidence === 'H' ? confDotClass : 'medium'}" style="width:6px;height:6px;border-radius:50%;display:inline-block"></span> ${p.commentary_conf}</span></div>
+      <div style="font-family:var(--font-data);font-size:11px;color:var(--text-secondary);line-height:1.7">${p.commentary}</div>
+    </div>
+
+    <div class="detail-section" style="background:rgba(255,179,71,0.05);border-radius:4px;padding:10px;border-left:3px solid var(--oil)">
+      <div class="detail-title" style="font-size:11px; color:var(--oil)">CAVEAT</div>
+      <div style="font-family:var(--font-data);font-size:11px;color:var(--text-secondary);line-height:1.7;font-style:italic">${p.caveat}</div>
+    </div>
+
+    <div class="detail-section">
+      <div class="detail-title" style="font-size:11px; color:var(--text-muted)">TIMELINE VALUES</div>
+      ${historyHTML}
+    </div>
+
+    <a class="source-link" href="${s.source_url}" target="_blank">Source: ${s.source}</a>
+  `);
+}
+
+// Update expanded panel when timeline scrubber moves
+function updateExpandedSignals() {
+  if (expandedPanelOpen) {
+    renderExpandedCategories();
+  }
 }
 
 // ============================================================
@@ -2045,6 +2968,7 @@ function selectCascadeDay(day) {
   renderCascadeContent(); // Update detail panel narrative
   renderDefaultPanel();   // Refresh the summary stats if showing default view
   renderSignalCards();    // Update signal card values to match crisis day
+  updateExpandedSignals(); // Update expanded panel values to match crisis day (S.2)
 }
 
 function renderDefaultPanel() {
@@ -2480,6 +3404,11 @@ function closeCascadeModal() {
 // Close on Escape key
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
+    // Close expanded signal panel first (S.2)
+    if (expandedPanelOpen) {
+      toggleExpandedPanel();
+      return;
+    }
     const modal = document.getElementById('cascade-modal');
     if (modal.classList.contains('visible')) {
       closeCascadeModal();
