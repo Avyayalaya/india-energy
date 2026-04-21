@@ -689,7 +689,7 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
 
 <!-- HEADER -->
 <header id="header">
-  <h1>India's Energy Nervous System</h1>
+  <h1>India's Energy Nervous System <span style="font-family:var(--font-data);font-size:9px;font-weight:500;margin-left:10px;padding:2px 7px;border-radius:3px;background:rgba(79,195,247,0.15);color:var(--accent);letter-spacing:0.8px;-webkit-text-fill-color:var(--accent);background-clip:unset;-webkit-background-clip:unset;">BIWEEKLY UPDATE · APR 21, 2026</span></h1>
   <div class="header-toggles">
     <div class="layer-toggle active" data-layer="routes-oil" onclick="toggleLayer(this)">
       <span class="dot" style="background:var(--oil)"></span>Oil
@@ -726,7 +726,7 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
       <div class="timeline-connector active"></div>
       <button class="timeline-btn" data-day="day90" onclick="selectCascadeDay('day90')">MAY 29<br><span>DAY 90</span></button>
       <div class="timeline-connector"></div>
-      <button class="timeline-btn active" data-day="today" onclick="selectCascadeDay('today')">APR 2<br><span>TODAY</span></button>
+      <button class="timeline-btn active" data-day="today" onclick="selectCascadeDay('today')">APR 21<br><span>UPDATE</span></button>
     </div>
   </div>
 </header>
@@ -770,7 +770,7 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
   <div class="cascade-header">
     <div>
       <h2>Signal Cascade</h2>
-      <div class="cascade-subtitle">How the Hormuz crisis propagated across signal domains &mdash; Feb 28 to Apr 2, 2026</div>
+      <div class="cascade-subtitle">How the Hormuz crisis propagated across signal domains &mdash; Feb 28 to Apr 21, 2026 (biweekly refresh)</div>
     </div>
     <button class="cascade-close" onclick="closeCascadeModal()" title="Close (Esc)">&times;</button>
   </div>
@@ -805,6 +805,15 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
   <a href="https://commerce.gov.in/trade-statistics/" target="_blank">DGCI&amp;S / Ministry of Commerce — Trade Statistics</a>
   <a href="https://rbi.org.in/Scripts/PublicationsView.aspx" target="_blank">RBI — Monetary Policy Statement / Macroeconomic Projections</a>
   <a href="https://meritindia.in/" target="_blank">MERIT India — Plant-Level Merit Order Dispatch Data (Ministry of Power)</a>
+
+  <div style="font-family:var(--font-data);font-size:9px;color:var(--text-muted);margin:10px 0 4px 0;text-transform:uppercase;letter-spacing:0.5px">Apr 21 Refresh — Added Sources</div>
+  <a href="https://www.iaanexpress.com/2026/04/18/india-ships-exit-hormuz-strait-energy-crisis/" target="_blank">IAAN Express — Indian Oil Tankers Safely Exit Hormuz (Apr 17)</a>
+  <a href="https://www.businesstoday.in/world/story/hormuz-flashpoint-indian-navy-steps-up-vigil-after-ships-targeted-issues-advisory-526542-2026-04-20" target="_blank">BusinessToday — Indian Navy Hormuz Advisory (Apr 20)</a>
+  <a href="https://windward.ai/blog/april-13-maritime-intelligence-daily/" target="_blank">Windward — Iran War Maritime Intelligence Daily (Apr 13)</a>
+  <a href="https://en.wikipedia.org/wiki/2026_Strait_of_Hormuz_crisis" target="_blank">Wikipedia — 2026 Strait of Hormuz Crisis (running timeline)</a>
+  <a href="https://www.weforum.org/stories/2026/04/beyond-oil-lng-commodities-impacted-closure-hormuz-strait/" target="_blank">World Economic Forum — Commodities Impacted by Hormuz (Apr 2026)</a>
+  <a href="https://unctad.org/system/files/official-document/osginf2026d2_en.pdf" target="_blank">UNCTAD — Hormuz Disruptions: Growth &amp; Financial Implications</a>
+  <a href="https://www.india-briefing.com/news/indias-oil-supply-hormuz-diversification-strategy-43381.html/" target="_blank">India Briefing — Oil Supply Diversification Strategy</a>
 </div>
 </div>
 
@@ -900,7 +909,7 @@ const PORTS = [
 ];
 
 const CHOKEPOINTS = [
-  {id:"hormuz",name:"Strait of Hormuz",lat:26.567,lng:56.25,flow_mbd:20.9,india_pct:45,status:"disrupted",risk:"critical",india_crude_pct:45,india_lng_pct:60,india_lpg_pct:90,bypass_mbd:7.4,crisis:"95.6% traffic decline in March 2026 [IMF PortWatch]. 181 ships vs 4,140 normal. Brent peaked at $126/bbl [EIA]."},
+  {id:"hormuz",name:"Strait of Hormuz",lat:26.567,lng:56.25,flow_mbd:20.9,india_pct:45,status:"volatile",risk:"critical",india_crude_pct:45,india_lng_pct:60,india_lpg_pct:90,bypass_mbd:7.4,crisis:"March 2026: 95.6% traffic decline (181 vs 4,140 normal) [IMF PortWatch]. Brent peaked $126/bbl [EIA]. Apr 13-19: partial, volatile reopening — 6-8/day early week, 20+/day surge Apr 17-18, Apr 18 Iran reimposition. Indian-flagged tankers transiting via Iranian-water corridors [IAAN Express, Apr 17]."},
   {id:"malacca",name:"Strait of Malacca",lat:2.5,lng:101.5,flow_mbd:23.2,india_pct:15,status:"normal",risk:"medium",crisis:"Primary route for Indonesian coal to India. Not directly affected by 2026 crisis."},
   {id:"suez",name:"Suez Canal",lat:30.61,lng:32.42,flow_mbd:4.9,india_pct:5,status:"reduced",risk:"high",crisis:"Houthi disruptions. Many ships rerouting via Cape. +150% container rates."},
   {id:"bab_el_mandeb",name:"Bab el-Mandeb",lat:12.583,lng:43.333,flow_mbd:8.5,india_pct:5,status:"disrupted",risk:"high",crisis:"Gateway to Red Sea/Suez. Significantly disrupted by Houthi attacks."},
@@ -1205,37 +1214,37 @@ const SIGNALS = {
   hormuz: {
     name: "HORMUZ TRANSIT",
     unit: "transits/mo",
-    current: 181,
+    current: 380,
     baseline: 4140,
-    change_pct: -95.6,
-    change_label: "-95.6%",
+    change_pct: -90.8,
+    change_label: "-90.8%",
     direction: "bad", // lower = bad
-    sparkline: [4140, 4100, 2100, 500, 200, 181, 190],
-    confidence: "H",
+    sparkline: [4140, 4100, 2100, 500, 200, 181, 380],
+    confidence: "M",
     source: "IMF PortWatch",
     source_url: "https://portwatch.imf.org/pages/chokepoint6",
-    updated: "2026-04-01",
+    updated: "2026-04-21",
     formatValue: v => v.toLocaleString(),
     history: {
       day0:  { value: 4140, note: "Normal operations (~138/day)" },
       day1:  { value: 2900, note: "Traffic drops ~70% within hours" },
       day7:  { value: 500,  note: "~90% collapsed" },
       day30: { value: 181,  note: "95.6% collapsed — 181 ships in March" },
-      day90: { value: 200,  note: "Projected — minimal recovery" },
-      today: { value: 181,  note: "95.6% decline from normal 4,140" }
+      day90: { value: 600,  note: "Projected — slow, volatile recovery" },
+      today: { value: 380,  note: "Partial, volatile reopening — 6-8/day early Apr, surge to 20+/day Apr 17-18, Apr 18 reimposition" }
     },
     p45: {
       title: "HORMUZ TRANSIT — PHYSICAL SIGNAL",
-      current_label: "~181 transits/month (Apr 1, 2026)",
+      current_label: "~380 transits/month projected (Apr 13-19 run rate)",
       baseline_label: "~4,140 transits/month (Feb 27, normal)",
-      change_detail: "-3,959 transits (-95.6%)",
+      change_detail: "-3,760 transits (-90.8%) vs baseline; +210% vs March low",
       peak: "4,140/month (pre-crisis normal)",
-      observation: "IMF PortWatch recorded 181 vessel transits through Hormuz in March 2026, down 95.6% from the ~4,140 monthly average. 71% of remaining traffic was Iranian-owned or shadow fleet.",
-      observation_conf: "H",
-      context: "Hormuz carries 20.9 mb/d of crude and condensate — roughly 20% of global supply. India receives 45% of its crude, 60% of its LNG, and 90% of its LPG through this chokepoint.",
-      commentary: "The near-complete shutdown means India has effectively lost direct access to its largest single supply corridor. The 181 remaining transits are almost entirely non-commercial vessels.",
-      commentary_conf: "H",
-      caveat: "IMF PortWatch updates weekly (Tuesdays, 9 AM ET). Daily counts may vary from our monthly aggregation. Ship-type classification relies on AIS data which can be spoofed."
+      observation: "Post-April 2, transit has resumed at reduced and unstable levels. April 12 logged 21 vessels (11 in, 10 out). April 13-19 saw 6-8 transits/day early week, surging past 20/day on April 17-18 after Iran announced full reopening under a fragile ceasefire — only for Iran to reimpose restrictions on April 18, spiking insurance premiums. 35 vessels reversed in 36 hours; CENTCOM intercepted 27 vessels. Indian-flagged tankers are successfully transiting via designated Iranian-water corridors as of April 17.",
+      observation_conf: "M",
+      context: "Hormuz carries 20.9 mb/d of crude and condensate — roughly 20% of global supply. India receives 45% of its crude, 60% of its LNG, and 90% of its LPG through this chokepoint. India has offset Gulf shortfalls by ramping up Russian crude imports.",
+      commentary: "The pattern is binary-on-binary-off rather than steady recovery: diplomatic windows open, transit surges, then a single incident or announcement collapses it again. Daily volatility now exceeds March's averaged decline — which matters operationally because insurance and charter contracts price volatility, not just level.",
+      commentary_conf: "M",
+      caveat: "GPS jamming, AIS spoofing, and vessels going dark have been reported since April ceasefire attempts — daily transit counts should be treated as approximate. IMF PortWatch updates weekly (Tuesdays, 9 AM ET)."
     }
   },
   polymarket: {
@@ -3063,6 +3072,20 @@ function renderDefaultDetail() {
     <div class="detail-section">
       <div class="detail-title" style="font-size:16px">India's Energy Nervous System</div>
       <div class="detail-divider"></div>
+    </div>
+
+    <div class="detail-section" style="background:rgba(79,195,247,0.06);border:1px solid rgba(79,195,247,0.25);border-radius:4px;padding:10px 12px;margin-bottom:12px;">
+      <div class="detail-title" style="font-size:10px; color:var(--accent); letter-spacing:0.8px;">APR 21 BIWEEKLY UPDATE &mdash; SINCE APR 2 SNAPSHOT</div>
+      <div style="font-family:var(--font-data);font-size:11px;color:var(--text-primary);line-height:1.55;margin-top:6px;">
+        <div style="margin-bottom:5px;"><strong style="color:var(--accent);">Hormuz status: disrupted → volatile.</strong> Not normalized, not shut. Binary-on-binary-off pattern now dominates.</div>
+        <div style="margin-bottom:4px;"><span style="color:var(--text-muted);">Apr 12:</span> 21 transits (11 in, 10 out) — first meaningful flow since mid-March.</div>
+        <div style="margin-bottom:4px;"><span style="color:var(--text-muted);">Apr 13-19:</span> 6-8/day early week, surge to 20+/day on Apr 17-18 after Iran's full-reopening announcement under fragile ceasefire.</div>
+        <div style="margin-bottom:4px;"><span style="color:var(--text-muted);">Apr 18:</span> Iran abruptly reimposed restrictions — insurance premiums spiked; 35 vessels reversed in 36 hours; CENTCOM intercepted 27.</div>
+        <div style="margin-bottom:4px;"><span style="color:var(--text-muted);">Apr 17:</span> Indian-flagged crude/LPG tankers transiting via designated Iranian-water corridors [IAAN Express].</div>
+        <div style="margin-bottom:4px;"><span style="color:var(--text-muted);">Apr 20:</span> Indian Navy stepped up vigil after ships targeted; issued fresh advisory [BusinessToday].</div>
+        <div style="margin-bottom:4px;"><span style="color:var(--text-muted);">India offset:</span> ramped Russian crude to cover Gulf shortfalls.</div>
+        <div style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border);font-size:10px;color:var(--text-muted);">Data-quality caveat: GPS jamming, AIS spoofing, and vessels going dark reported since ceasefire attempts. Treat daily transit counts as approximate. Next refresh: May 5, 2026.</div>
+      </div>
     </div>
 
     <div class="detail-section">
