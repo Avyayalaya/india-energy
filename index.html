@@ -689,7 +689,7 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
 
 <!-- HEADER -->
 <header id="header">
-  <h1>India's Energy Nervous System <span style="font-family:var(--font-data);font-size:9px;font-weight:500;margin-left:10px;padding:2px 7px;border-radius:3px;background:rgba(79,195,247,0.15);color:var(--accent);letter-spacing:0.8px;-webkit-text-fill-color:var(--accent);background-clip:unset;-webkit-background-clip:unset;">BIWEEKLY UPDATE · APR 21, 2026</span></h1>
+  <h1>India's Energy Nervous System <span style="font-family:var(--font-data);font-size:9px;font-weight:500;margin-left:10px;padding:2px 7px;border-radius:3px;background:rgba(79,195,247,0.15);color:var(--accent);letter-spacing:0.8px;-webkit-text-fill-color:var(--accent);background-clip:unset;-webkit-background-clip:unset;">BIWEEKLY UPDATE · MAY 5, 2026</span></h1>
   <div class="header-toggles">
     <div class="layer-toggle active" data-layer="routes-oil" onclick="toggleLayer(this)">
       <span class="dot" style="background:var(--oil)"></span>Oil
@@ -726,7 +726,7 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
       <div class="timeline-connector active"></div>
       <button class="timeline-btn" data-day="day90" onclick="selectCascadeDay('day90')">MAY 29<br><span>DAY 90</span></button>
       <div class="timeline-connector"></div>
-      <button class="timeline-btn active" data-day="today" onclick="selectCascadeDay('today')">APR 21<br><span>UPDATE</span></button>
+      <button class="timeline-btn active" data-day="today" onclick="selectCascadeDay('today')">MAY 5<br><span>UPDATE</span></button>
     </div>
   </div>
 </header>
@@ -770,7 +770,7 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
   <div class="cascade-header">
     <div>
       <h2>Signal Cascade</h2>
-      <div class="cascade-subtitle">How the Hormuz crisis propagated across signal domains &mdash; Feb 28 to Apr 21, 2026 (biweekly refresh)</div>
+      <div class="cascade-subtitle">How the Hormuz crisis propagated across signal domains &mdash; Feb 28 to May 5, 2026 (biweekly refresh)</div>
     </div>
     <button class="cascade-close" onclick="closeCascadeModal()" title="Close (Esc)">&times;</button>
   </div>
@@ -806,7 +806,16 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
   <a href="https://rbi.org.in/Scripts/PublicationsView.aspx" target="_blank">RBI — Monetary Policy Statement / Macroeconomic Projections</a>
   <a href="https://meritindia.in/" target="_blank">MERIT India — Plant-Level Merit Order Dispatch Data (Ministry of Power)</a>
 
-  <div style="font-family:var(--font-data);font-size:9px;color:var(--text-muted);margin:10px 0 4px 0;text-transform:uppercase;letter-spacing:0.5px">Apr 21 Refresh — Added Sources</div>
+  <div style="font-family:var(--font-data);font-size:9px;color:var(--text-muted);margin:10px 0 4px 0;text-transform:uppercase;letter-spacing:0.5px">May 5 Refresh — Added Sources</div>
+  <a href="https://www.aljazeera.com/economy/2026/5/5/oil-prices-surge-as-violence-flares-in-strait-of-hormuz" target="_blank">Al Jazeera — Oil prices surge as violence flares in Strait of Hormuz (May 5)</a>
+  <a href="https://www.cnbc.com/2026/05/04/oil-prices-today-wti-brent-trump-iran-us-hormuz.html" target="_blank">CNBC — Oil prices jump after Iran attacks UAE as US tries to open Strait (May 4)</a>
+  <a href="https://www.aljazeera.com/economy/2026/4/24/oil-rises-above-106-per-barrel-as-us-iran-deadlocked-in-strait-of-hormuz" target="_blank">Al Jazeera — Oil rises above $106 as US-Iran deadlocked (Apr 24)</a>
+  <a href="https://oilprice.com/Energy/Energy-General/The-Strait-of-Hormuz-May-Reopen-But-the-System-Has-Already-Broken.html" target="_blank">OilPrice — Hormuz May Reopen, But the System Has Already Broken (late Apr)</a>
+  <a href="https://think.ing.com/articles/oil-forecasts-revised-higher-as-strait-of-hormuz-disruption-drags-on280426/" target="_blank">ING THINK — Oil forecasts revised higher as Hormuz disruption drags on (Apr 28)</a>
+  <a href="https://theprint.in/economy/indias-strategic-oil-reserves-tell-a-tale-of-structural-constraints-stalled-expansion-heres-why/2889144/" target="_blank">The Print — India's strategic oil reserves: structural constraints (Mar 2026 Parl report)</a>
+  <a href="https://vajiramandravi.com/current-affairs/hormuz-halt-india-boosts-russian-oil-invariant-imports/" target="_blank">Vajiram & Ravi — India boosts Russian oil imports during Hormuz halt</a>
+
+  <div style="font-family:var(--font-data);font-size:9px;color:var(--text-muted);margin:10px 0 4px 0;text-transform:uppercase;letter-spacing:0.5px">Apr 21 Refresh — Sources (retained)</div>
   <a href="https://www.iaanexpress.com/2026/04/18/india-ships-exit-hormuz-strait-energy-crisis/" target="_blank">IAAN Express — Indian Oil Tankers Safely Exit Hormuz (Apr 17)</a>
   <a href="https://www.businesstoday.in/world/story/hormuz-flashpoint-indian-navy-steps-up-vigil-after-ships-targeted-issues-advisory-526542-2026-04-20" target="_blank">BusinessToday — Indian Navy Hormuz Advisory (Apr 20)</a>
   <a href="https://windward.ai/blog/april-13-maritime-intelligence-daily/" target="_blank">Windward — Iran War Maritime Intelligence Daily (Apr 13)</a>
@@ -1150,18 +1159,18 @@ const CASCADE_DATA = {
     mapState: "day90"
   },
   "today": {
-    label: "TODAY (Apr 2)",
-    date: "April 2, 2026",
+    label: "TODAY (May 5)",
+    date: "May 5, 2026",
     items: [
-      "March total: 181 vessels transited (95.6% decline from normal 4,140) [IMF PortWatch daily transit data]",
-      "71% of March traffic was Iranian-owned or shadow fleet [Lloyd's List vessel tracking]",
-      "[Unverified diplomatic reports] Iran declares 5 'friendly nations' allowed transit: China, Russia, India, Iraq, Pakistan",
-      "[Reports indicate] IRGC formalizes toll: ~$1/barrel (yuan or crypto stablecoins)",
-      "Case-by-case clearance only - not open corridor for India [MEA statement]",
-      "28 India-linked ships stranded; 8 transited under Navy escort [MEA / PIB press releases]",
-      "Operation Urja Suraksha: Indian Navy escort operations [PIB / Ministry of Defence]",
-      "Brent at ~$101-105/bbl (down from $126 peak) [EIA spot prices]",
-      "Polymarket: 82.5% probability Hormuz stays disrupted past April [polymarket.com]"
+      "Hormuz traffic: ~5 vessels/day average, 3/day in last 48-hour window (vs 120-140 normal) [Al Jazeera, May 5]",
+      "20,000 seafarers stranded on 2,000 vessels in the Strait [International Maritime Organization]",
+      "Apr 30: Polymarket 'Hormuz traffic returns to normal by April 30' contract RESOLVED NO — market called it correctly",
+      "May 4: Iran attacked UAE; US trying to open Strait — re-escalation moment [CNBC]",
+      "Brent at $113.54/bbl May 5 morning, $114.44 May 4 (highest since May 2022) [Al Jazeera, CNBC]",
+      "ING base case revised upward: Brent Q2 avg $104, Q4 avg $92 — protracted disruption priced in [ING THINK]",
+      "India offset: Russia now largest crude supplier; refiners signaling more Russian crude purchases [Vajiram & Ravi]",
+      "LPG vulnerability acute: 60% imports via Hormuz; queues + delays at retail level [India-Briefing, IEA]",
+      "India SPR: 9-13 days strategic only / 74 days incl. commercial. Parl Standing Committee called for 90 days [The Print, March 2026 report]"
     ],
     mapState: "today"
   }
@@ -1178,16 +1187,16 @@ const SIGNALS = {
   brent: {
     name: "BRENT CRUDE",
     unit: "$/bbl",
-    current: 101.40,
+    current: 113.54,
     baseline: 69.20,
-    change_pct: 46.5,
-    change_label: "+46.5%",
+    change_pct: 64.1,
+    change_label: "+64.1%",
     direction: "bad", // higher = bad for India as importer
-    sparkline: [69.2, 82.1, 98.5, 126.0, 118.3, 105.7, 101.4],
+    sparkline: [69.2, 82.1, 110.5, 126.0, 118.0, 106.0, 113.54],
     confidence: "H",
-    source: "EIA Petroleum Spot Prices",
+    source: "EIA / Al Jazeera / CNBC",
     source_url: "https://www.eia.gov/dnav/pet/pet_pri_spt_s1_d.htm",
-    updated: "2026-04-01",
+    updated: "2026-05-05",
     formatValue: v => "$" + v.toFixed(2),
     history: {
       day0:  { value: 69.20,  note: "Pre-crisis baseline" },
@@ -1195,35 +1204,35 @@ const SIGNALS = {
       day7:  { value: 110.50, note: "Sustained rise, P&I cancellation" },
       day30: { value: 126.00, note: "Peak — supply fears maximum" },
       day90: { value: 105.00, note: "Projected — partial adaptation" },
-      today: { value: 101.40, note: "Stabilizing — rerouting absorbing demand" }
+      today: { value: 113.54, note: "Re-escalating — May 4 Iran attack on UAE; highest since May 2022" }
     },
     p45: {
       title: "BRENT CRUDE — PRICE SIGNAL",
-      current_label: "$101.40/bbl (Apr 1, 2026)",
+      current_label: "$113.54/bbl (May 5, 2026)",
       baseline_label: "$69.20/bbl (Feb 27, pre-crisis)",
-      change_detail: "+$32.20 (+46.5%)",
-      peak: "$126.00 (Mar 8)",
-      observation: "Brent crude surged from $69 to $126 in 8 days following Operation Epic Fury. Currently stabilizing around $101 as Russian crude rerouting absorbs some demand.",
+      change_detail: "+$44.34 (+64.1%)",
+      peak: "$126.00 (Mar 8) — May approaching peak again",
+      observation: "Brent has re-accelerated through April-May. After easing to ~$101 in early April, the May 4 Iran attack on UAE and continued Hormuz constraint pushed Brent to $114.44 (May 4 close, highest since May 2022). Trading at $113.54 May 5 morning.",
       observation_conf: "H",
-      context: "Brent is the global benchmark. The $126 peak was the highest since 2022. The spread between Brent and Indian basket crude hit $50+ indicating India-specific supply stress.",
-      commentary: "The stabilization around $101 suggests markets are pricing in a prolonged disruption (not a quick resolution) with partial adaptation via alternative routes.",
+      context: "The April-May trajectory broke the 'stabilization' narrative. ING revised its forecasts upward Apr 28 — base case Q2 avg $104, Q4 avg $92, reflecting protracted disruption rather than snap-back.",
+      commentary: "The retracement from $101 → $113 in four weeks tracks the failure of the Apr 8 ceasefire to translate into traffic recovery. Hormuz remains at ~5 vessels/day vs 120-140 normal — the system has not reopened in any operational sense, even when nominally not closed.",
       commentary_conf: "M",
-      caveat: "We are not oil traders. Price forecasting is outside our competence. This is observational data from EIA, not analysis."
+      caveat: "We are not oil traders. Price forecasting is outside our competence. This is observational data from EIA / Al Jazeera / CNBC, not analysis."
     }
   },
   hormuz: {
     name: "HORMUZ TRANSIT",
     unit: "transits/mo",
-    current: 380,
+    current: 150,
     baseline: 4140,
-    change_pct: -90.8,
-    change_label: "-90.8%",
+    change_pct: -96.4,
+    change_label: "-96.4%",
     direction: "bad", // lower = bad
-    sparkline: [4140, 4100, 2100, 500, 200, 181, 380],
+    sparkline: [4140, 4100, 2100, 500, 200, 181, 150],
     confidence: "M",
-    source: "IMF PortWatch",
+    source: "IMF PortWatch / Al Jazeera / IMO",
     source_url: "https://portwatch.imf.org/pages/chokepoint6",
-    updated: "2026-04-21",
+    updated: "2026-05-05",
     formatValue: v => v.toLocaleString(),
     history: {
       day0:  { value: 4140, note: "Normal operations (~138/day)" },
@@ -1231,56 +1240,56 @@ const SIGNALS = {
       day7:  { value: 500,  note: "~90% collapsed" },
       day30: { value: 181,  note: "95.6% collapsed — 181 ships in March" },
       day90: { value: 600,  note: "Projected — slow, volatile recovery" },
-      today: { value: 380,  note: "Partial, volatile reopening — 6-8/day early Apr, surge to 20+/day Apr 17-18, Apr 18 reimposition" }
+      today: { value: 150,  note: "~5/day avg, 3/day in last 48h. Apr 8 ceasefire announced; traffic never recovered." }
     },
     p45: {
       title: "HORMUZ TRANSIT — PHYSICAL SIGNAL",
-      current_label: "~380 transits/month projected (Apr 13-19 run rate)",
+      current_label: "~5 vessels/day average; 3/day in last 48h (~150/month projected)",
       baseline_label: "~4,140 transits/month (Feb 27, normal)",
-      change_detail: "-3,760 transits (-90.8%) vs baseline; +210% vs March low",
+      change_detail: "-3,990 transits (-96.4%) vs baseline; below the March low",
       peak: "4,140/month (pre-crisis normal)",
-      observation: "Post-April 2, transit has resumed at reduced and unstable levels. April 12 logged 21 vessels (11 in, 10 out). April 13-19 saw 6-8 transits/day early week, surging past 20/day on April 17-18 after Iran announced full reopening under a fragile ceasefire — only for Iran to reimpose restrictions on April 18, spiking insurance premiums. 35 vessels reversed in 36 hours; CENTCOM intercepted 27 vessels. Indian-flagged tankers are successfully transiting via designated Iranian-water corridors as of April 17.",
-      observation_conf: "M",
-      context: "Hormuz carries 20.9 mb/d of crude and condensate — roughly 20% of global supply. India receives 45% of its crude, 60% of its LNG, and 90% of its LPG through this chokepoint. India has offset Gulf shortfalls by ramping up Russian crude imports.",
-      commentary: "The pattern is binary-on-binary-off rather than steady recovery: diplomatic windows open, transit surges, then a single incident or announcement collapses it again. Daily volatility now exceeds March's averaged decline — which matters operationally because insurance and charter contracts price volatility, not just level.",
+      observation: "The Apr 8 Iran-US ceasefire announcement did not translate into traffic recovery. Vessel transits continue at ~5/day average, dropping to 3/day in the most recent 48-hour window (vs 120-140 normal). The Apr 13-19 'partial reopening' surge to 20+/day was the high-water mark — Iran's Apr 18 reimposition + the May 4 Iran attack on UAE collapsed it back. IMO reports 20,000 seafarers stranded on 2,000 vessels in the Strait.",
+      observation_conf: "H",
+      context: "Hormuz carries ~20 mb/d of crude — roughly 20% of global supply. ~52% of India's crude, 60% of its LPG, and substantial LNG transit this chokepoint. India has offset by ramping Russian crude — Russia is now India's largest crude supplier.",
+      commentary: "Per OilPrice (late April): 'The Strait of Hormuz May Reopen, But the System Has Already Broken.' Even when Iran nominally permits transit, P&I insurance, war-risk premiums, charter availability, and the binary-on-binary-off pattern keep operational throughput at <4% of normal. Reopening on paper has not been reopening in practice.",
       commentary_conf: "M",
-      caveat: "GPS jamming, AIS spoofing, and vessels going dark have been reported since April ceasefire attempts — daily transit counts should be treated as approximate. IMF PortWatch updates weekly (Tuesdays, 9 AM ET)."
+      caveat: "GPS jamming, AIS spoofing, and vessels going dark have been reported throughout the crisis. Daily transit counts should be treated as approximate. IMF PortWatch updates weekly (Tuesdays, 9 AM ET)."
     }
   },
   polymarket: {
     name: "POLYMARKET",
-    unit: "% norm. by Apr 30",
-    current: 17.5,
+    unit: "Apr 30 — RESOLVED NO",
+    current: 0,
     baseline: 50,
-    change_pct: -65,
-    change_label: "17.5%",
-    direction: "bad", // lower normalization chance = bad
-    sparkline: [50, 42, 35, 28, 20, 17.5, 17.5],
+    change_pct: -100,
+    change_label: "Resolved NO",
+    direction: "bad", // contract resolved as predicted = bad outcome confirmed
+    sparkline: [50, 42, 35, 28, 20, 17.5, 0],
     confidence: "H",
-    source: "Polymarket",
+    source: "Polymarket (contract closed)",
     source_url: "https://polymarket.com/event/strait-of-hormuz-traffic-returns-to-normal-by-april-30",
-    updated: "2026-04-01",
-    formatValue: v => v.toFixed(1) + "%",
+    updated: "2026-05-05",
+    formatValue: v => v === 0 ? "NO" : v.toFixed(1) + "%",
     history: {
       day0:  { value: 50.0, note: "No active contract pre-crisis" },
       day1:  { value: 42.0, note: "Market opens — skeptical but uncertain" },
       day7:  { value: 28.0, note: "Odds dropping as crisis deepens" },
       day30: { value: 17.5, note: "Market prices prolonged disruption" },
       day90: { value: 10.0, note: "Projected — very low normalization odds" },
-      today: { value: 17.5, note: "82.5% chance Hormuz stays disrupted past April" }
+      today: { value: 0,    note: "Apr 30 contract RESOLVED NO. Market called it correctly — Hormuz did not normalize." }
     },
     p45: {
       title: "POLYMARKET — SENTIMENT SIGNAL",
-      current_label: "17.5% chance of normalization by Apr 30",
+      current_label: "Contract resolved NO on Apr 30, 2026",
       baseline_label: "~50% (early March, when contract opened)",
-      change_detail: "From ~50% to 17.5% (was ~40% in early March)",
+      change_detail: "Resolved NO — 17.5% Apr 1 pricing was vindicated",
       peak: "50% (contract opening)",
-      observation: "Polymarket's 'Strait of Hormuz traffic returns to normal by April 30' contract trades at 17.5%, meaning the crowd assigns an 82.5% probability that the disruption continues past April.",
+      observation: "Polymarket's 'Strait of Hormuz traffic returns to normal by April 30' contract resolved NO. The market's steady decline from ~50% to 17.5% over March-April accurately forecast persistent disruption. Vessel traffic at the resolution date was ~5/day vs 120-140 normal — the market called it correctly.",
       observation_conf: "H",
-      context: "Prediction markets aggregate dispersed information. Polymarket's Hormuz contract draws from traders with shipping, military, and diplomatic domain knowledge. The price IS the consensus forecast.",
-      commentary: "The steady decline from ~50% to 17.5% tracks the failure of diplomatic channels and the formalization of Iran's 'friendly nations' transit policy. The market sees no near-term resolution.",
-      commentary_conf: "H",
-      caveat: "Prediction markets can be illiquid and manipulated. Polymarket volume on this contract should be checked — low-volume markets are noisy. This is crowd sentiment, not a forecast."
+      context: "Prediction markets aggregate dispersed information. Polymarket's Hormuz contract drew from traders with shipping, military, and diplomatic domain knowledge. The 17.5% Apr 1 pricing vs the 100% NO outcome demonstrates the channel's calibration on crisis-track forecasting.",
+      commentary: "A new contract on later normalization windows (May 31, June 30) would surface here once available. The Apr 30 resolution is itself signal: the crowd was correct, and the persistent-disruption thesis has empirical confirmation.",
+      commentary_conf: "M",
+      caveat: "Prediction markets can be illiquid and manipulated. The Apr 30 contract had reasonable volume; resolution mechanics on Polymarket are public and auditable."
     }
   },
   war_risk: {
@@ -1303,11 +1312,11 @@ const SIGNALS = {
       day7:  { value: 1.50,  note: "JWC extends Listed Area, premiums surge" },
       day30: { value: 3.00,  note: "Peak — P&I cancellation compounds risk" },
       day90: { value: 2.50,  note: "Projected — slightly lower but elevated" },
-      today: { value: 2.75,  note: "2.5-3.0% range — 20x peacetime" }
+      today: { value: 3.00,  note: "May 4 Iran attack on UAE — premiums likely repricing upward; ~3.0% range (24x peacetime)" }
     },
     p45: {
       title: "WAR RISK PREMIUM — RISK SIGNAL",
-      current_label: "2.5-3.0% of hull value (Apr 1, 2026)",
+      current_label: "~3.0% of hull value (May 5, 2026 est.)",
       baseline_label: "0.125% (Feb 27, pre-crisis)",
       change_detail: "+2.375-2.875pp (~2,000-2,300%)",
       peak: "~3.0% (Mar 8-12)",
@@ -2898,7 +2907,7 @@ function renderCommodityPanel(commodity) {
 
       <div class="detail-section">
         <div class="detail-title" style="font-size:11px; color:var(--text-muted)">KEY SIGNALS</div>
-        <div class="stat-row"><span class="stat-label">Brent</span><span class="stat-value alert">$101.40 (+46.5%)</span></div>
+        <div class="stat-row"><span class="stat-label">Brent</span><span class="stat-value alert">$113.54 (+64.1%)</span></div>
         <div class="stat-row"><span class="stat-label">Indian Basket</span><span class="stat-value alert">$147 peak</span></div>
         <div class="stat-row"><span class="stat-label">Brent-WTI spread</span><span class="stat-value">$18</span></div>
         <div class="stat-row"><span class="stat-label">Dubai-Brent</span><span class="stat-value">$29</span></div>
@@ -3037,7 +3046,7 @@ function getCrisisStatsForDay(day) {
     'day7': { label: 'Day 7 (Mar 6)', transit: '~90% collapsed', brent: '$100+/bbl', basket: '$110/bbl', russia: '~28%', spr: '~60 days', lpg: '90% BLOCKED — rationing starts' },
     'day30': { label: 'Day 30 (Mar 28)', transit: '95.6% collapsed', brent: '$101/bbl (+46%)', basket: '$146/bbl peak', russia: '45.2% (+82.3%)', spr: '9.5 days (SPR only)', lpg: '80% commercial cut' },
     'day90': { label: 'Day 90 (Projected)', transit: '>95% disrupted', brent: '$90-110/bbl', basket: '$120-140/bbl', russia: '50%+ projected', spr: '<7 days (SPR only)', lpg: '15-20% deficit persists' },
-    'today': { label: 'Today (Apr 2)', transit: '95.6% collapsed', brent: '$101/bbl (+46%)', basket: '$146/bbl peak', russia: '45.2% (+82.3%)', spr: '9.5 days (SPR only)', lpg: 'IRGC toll active' }
+    'today': { label: 'Today (May 5)', transit: '~5/day avg, 3/day last 48h (96% below normal)', brent: '$113.54/bbl (+64%)', basket: '$120-130/bbl est.', russia: '50%+ share (largest supplier)', spr: '9-13 days strategic / 74 incl. commercial', lpg: '60% Hormuz-exposed; queues + delays' }
   };
   return stats[day] || stats['today'];
 }
@@ -3075,16 +3084,17 @@ function renderDefaultDetail() {
     </div>
 
     <div class="detail-section" style="background:rgba(79,195,247,0.06);border:1px solid rgba(79,195,247,0.25);border-radius:4px;padding:10px 12px;margin-bottom:12px;">
-      <div class="detail-title" style="font-size:10px; color:var(--accent); letter-spacing:0.8px;">APR 21 BIWEEKLY UPDATE &mdash; SINCE APR 2 SNAPSHOT</div>
+      <div class="detail-title" style="font-size:10px; color:var(--accent); letter-spacing:0.8px;">MAY 5 BIWEEKLY UPDATE &mdash; SINCE APR 21</div>
       <div style="font-family:var(--font-data);font-size:11px;color:var(--text-primary);line-height:1.55;margin-top:6px;">
-        <div style="margin-bottom:5px;"><strong style="color:var(--accent);">Hormuz status: disrupted → volatile.</strong> Not normalized, not shut. Binary-on-binary-off pattern now dominates.</div>
-        <div style="margin-bottom:4px;"><span style="color:var(--text-muted);">Apr 12:</span> 21 transits (11 in, 10 out) — first meaningful flow since mid-March.</div>
-        <div style="margin-bottom:4px;"><span style="color:var(--text-muted);">Apr 13-19:</span> 6-8/day early week, surge to 20+/day on Apr 17-18 after Iran's full-reopening announcement under fragile ceasefire.</div>
-        <div style="margin-bottom:4px;"><span style="color:var(--text-muted);">Apr 18:</span> Iran abruptly reimposed restrictions — insurance premiums spiked; 35 vessels reversed in 36 hours; CENTCOM intercepted 27.</div>
-        <div style="margin-bottom:4px;"><span style="color:var(--text-muted);">Apr 17:</span> Indian-flagged crude/LPG tankers transiting via designated Iranian-water corridors [IAAN Express].</div>
-        <div style="margin-bottom:4px;"><span style="color:var(--text-muted);">Apr 20:</span> Indian Navy stepped up vigil after ships targeted; issued fresh advisory [BusinessToday].</div>
-        <div style="margin-bottom:4px;"><span style="color:var(--text-muted);">India offset:</span> ramped Russian crude to cover Gulf shortfalls.</div>
-        <div style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border);font-size:10px;color:var(--text-muted);">Data-quality caveat: GPS jamming, AIS spoofing, and vessels going dark reported since ceasefire attempts. Treat daily transit counts as approximate. Next refresh: May 5, 2026.</div>
+        <div style="margin-bottom:5px;"><strong style="color:var(--alert);">Hormuz status: re-escalating.</strong> Apr 30 normalization contract resolved NO. May 4 Iran attack on UAE. Apr 8 ceasefire framework has broken in practice — vessel traffic at ~5/day vs 120-140 normal.</div>
+        <div style="margin-bottom:4px;"><span style="color:var(--text-muted);">Apr 24:</span> Brent above $106 with US-Iran deadlocked in the Strait [Al Jazeera].</div>
+        <div style="margin-bottom:4px;"><span style="color:var(--text-muted);">Apr 28:</span> ING revises Brent forecasts upward — base case Q2 avg $104, Q4 avg $92 (protracted disruption priced in) [ING THINK].</div>
+        <div style="margin-bottom:4px;"><span style="color:var(--text-muted);">Apr 30:</span> Polymarket "Hormuz traffic returns to normal by Apr 30" contract <strong style="color:var(--alert);">RESOLVED NO</strong>. Market called it correctly.</div>
+        <div style="margin-bottom:4px;"><span style="color:var(--text-muted);">May 4:</span> Iran attacked UAE; US trying to open Strait. Brent jumps to $114.44 (highest since May 2022) [CNBC].</div>
+        <div style="margin-bottom:4px;"><span style="color:var(--text-muted);">May 5:</span> Brent $113.54. IMO reports 20,000 seafarers stranded on 2,000 vessels in the Strait [Al Jazeera, IMO].</div>
+        <div style="margin-bottom:4px;"><span style="color:var(--text-muted);">System frame:</span> "Hormuz may reopen but the system has already broken" — nominal openness without operational throughput [OilPrice].</div>
+        <div style="margin-bottom:4px;"><span style="color:var(--text-muted);">India offset:</span> Russia confirmed largest crude supplier (Feb 2026); refiners signaling more Russian purchases. LPG (60% Hormuz-dependent) queues persist. Parl Standing Committee calling for 90-day SPR (currently 9-13 days strategic / 74 incl. commercial).</div>
+        <div style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border);font-size:10px;color:var(--text-muted);">Data-quality caveat: GPS jamming, AIS spoofing, and vessels going dark continue. Treat daily transit counts as approximate. Next refresh: May 19, 2026.</div>
       </div>
     </div>
 
